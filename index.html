@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Control de Remisiones DC1</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    :root {
+      --navy: #0D1B2A; --navy2: #112240; --navy3: #0a1628;
+      --blue: #1565C0; --blue2: #1976D2; --cyan: #00B4D8;
+      --green: #00c853; --yellow: #ffd600; --red: #ff1744;
+      --orange: #FF6D00; --purple: #7C4DFF;
+      --bg: #080F1A; --surface: #0D1B2A; --card: #111F33;
+      --border: #1E3A5F; --text: #E8F0FE; --muted: #7B9CC4;
+      --accent: #00B4D8; --shadow: rgba(0,0,0,0.5);
+    }
+    body.light-mode {
+      --navy: #f0f4f8; --navy2: #ffffff; --navy3: #e2e8f0;
+      --bg: #f8fafc; --surface: #ffffff; --card: #ffffff;
+      --border: #e2e8f0; --text: #1e293b; --muted: #64748b;
+      --accent: #1565C0; --shadow: rgba(0,0,0,0.05);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    .topbar { background: linear-gradient(90deg, var(--navy) 0%, var(--navy3) 100%); border-bottom: 1px solid var(--border); padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--blue), var(--cyan)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Rajdhani'; font-weight: 700; color: #fff; font-size: 16px; }
+    .logo-text { font-family: 'Rajdhani'; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+    .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; letter-spacing: .5px; cursor: pointer; border: none; transition: all .2s; text-transform: uppercase; font-family: 'Inter'; }
+    .btn-primary { background: linear-gradient(135deg, var(--blue), var(--blue2)); color: #fff; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(21,101,192,.5); }
+    .btn-outline { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
+    .btn-outline:hover { background: rgba(0,180,216,.1); }
+    .btn-success { background: linear-gradient(135deg, #00897B, #00C853); color: #fff; }
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
+    .layout { display: flex; min-height: calc(100vh - 60px); }
+    .sidebar { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; }
+    .sidebar-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 12px 20px 4px; font-weight: 600; }
+    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; cursor: pointer; transition: all .2s; font-size: 13px; color: var(--muted); border-left: 3px solid transparent; font-weight: 500; }
+    .sidebar-item:hover { background: rgba(21,101,192,0.08); color: var(--text); }
+    .sidebar-item.active { background: rgba(21,101,192,0.12); color: var(--cyan); border-left-color: var(--cyan); }
+    .sidebar-item .icon { width: 20px; text-align: center; font-size: 15px; }
+    .sidebar-badge { margin-left: auto; background: var(--blue); color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
+    .main { flex: 1; padding: 24px; overflow-x: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+    .page-title { font-family: 'Rajdhani'; font-size: 28px; font-weight: 700; }
+    .page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; letter-spacing: .5px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; position: relative; overflow: hidden; transition: transform .2s; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent-color, var(--cyan)); }
+    .stat-icon { font-size: 24px; margin-bottom: 8px; }
+    .stat-value { font-family: 'Rajdhani'; font-size: 42px; font-weight: 700; line-height: 1; }
+    .stat-value.small { font-size: 32px; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+    .stat-sub { font-size: 11px; margin-top: 6px; color: var(--muted); }
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .chart-card-title { font-family: 'Rajdhani'; font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .badge-count { font-size: 11px; color: var(--muted); background: var(--navy3); padding: 2px 8px; border-radius: 10px; }
+    .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { font-size: 11px; color: var(--muted); width: 120px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-outer { flex: 1; background: rgba(255,255,255,.06); border-radius: 4px; height: 24px; overflow: hidden; position: relative; }
+    .bar-inner { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 10px; font-weight: 700; color: #fff; transition: width .8s ease; min-width: 30px; }
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+    .table-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .table-title { font-family: 'Rajdhani'; font-size: 16px; font-weight: 600; }
+    .search-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 7px; padding: 7px 12px; }
+    .search-box input { background: none; border: none; color: var(--text); font-size: 13px; font-family: 'Inter'; outline: none; width: 200px; }
+    .search-box input::placeholder { color: var(--muted); }
+    table.data { width: 100%; border-collapse: collapse; }
+    .data th { background: var(--navy2); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 12px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; font-weight: 600; text-align: left; }
+    .data td { padding: 12px 14px; border-bottom: 1px solid rgba(30,58,95,.4); font-size: 12px; vertical-align: middle; }
+    .data tr:hover td { background: rgba(21,101,192,.05); }
+    .data tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+    .badge-green { background: rgba(0,200,83,.15); color: #69F0AE; border: 1px solid rgba(0,200,83,.3); }
+    .badge-yellow { background: rgba(255,214,0,.12); color: var(--yellow); border: 1px solid rgba(255,214,0,.25); }
+    .badge-red { background: rgba(255,23,68,.12); color: #FF6090; border: 1px solid rgba(255,23,68,.25); }
+    .badge-blue { background: rgba(21,101,192,.2); color: #82B1FF; border: 1px solid rgba(21,101,192,.35); }
+    .filters-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+    .filter-select, .filter-input { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: 'Inter'; outline: none; min-width: 160px; }
+    .filter-select:focus, .filter-input:focus { border-color: var(--cyan); background: rgba(0,180,216,.05); }
+    .filter-select option { background: var(--navy); color: var(--text); }
+    #toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.5); transform: translateY(80px); opacity: 0; transition: all .35s cubic-bezier(.25,.8,.25,1); max-width: 320px; display: flex; align-items: center; gap: 10px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast .t-icon { font-size: 18px; }
+    .loading-overlay { position: fixed; inset: 0; background: rgba(8,15,26,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+    .loading-overlay.hidden { display: none; }
+    .spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; color: var(--muted); letter-spacing: 1px; }
+    .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.03); }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    .sync-dot.offline { background: var(--red); animation: none; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .kpi-mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi-mini { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+    .kpi-mini-value { font-family: 'Rajdhani'; font-size: 28px; font-weight: 700; }
+    .kpi-mini-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; position: relative; overflow: hidden; }
+    .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent-color, var(--cyan)); }
+    .metric-icon { font-size: 32px; margin-bottom: 12px; }
+    .metric-value { font-family: 'Rajdhani'; font-size: 48px; font-weight: 700; line-height: 1; }
+    .metric-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+    .metric-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .section-divider { display: flex; align-items: center; gap: 12px; margin: 32px 0 20px; }
+    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .section-title { font-family: 'Rajdhani'; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; }
+    .time-fast { color: var(--green); } .time-medium { color: var(--yellow); } .time-slow { color: var(--red); }
+    @media(max-width: 1024px) { .chart-row { grid-template-columns: 1fr; } .metric-row { grid-template-columns: 1fr; } .kpi-mini-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media(max-width: 768px) { .sidebar { display: none; } .stats-grid { grid-template-columns: 1fr 1fr; } .kpi-mini-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Sincronizando con Google Sheets...</div>
+  </div>
+
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">DC1</div>
+      <div>
+        <div class="logo-text">CONTROL DE REMISIONES</div>
+        <div class="logo-sub">Suite de Control de Tiempos</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="sync-status" id="sync-status">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="sync-text">Sincronizado</span>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="toggleTheme()" id="theme-toggle" style="padding:8px 10px;font-size:16px">🌙</button>
+      <button class="btn btn-outline btn-sm" onclick="syncWithGoogleSheets()">🔄 Sincronizar</button>
+      <button class="btn btn-primary" onclick="exportData()">↓ Exportar Datos</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-label">Navegacion</div>
+      <div class="sidebar-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="icon">▦</span> Dashboard General</div>
+      <div class="sidebar-item" onclick="showPage('control-tiempo')" id="nav-control-tiempo"><span class="icon">⏱</span> Control del Tiempo<span class="sidebar-badge" id="rem-count-badge">0</span></div>
+      <div class="sidebar-item" onclick="showPage('coordinadores')" id="nav-coordinadores"><span class="icon">👤</span> Coordinadores</div>
+      <div class="sidebar-item" onclick="showPage('contratistas')" id="nav-contratistas"><span class="icon">🏗</span> Contratistas</div>
+      <div class="sidebar-item" onclick="showPage('analisis')" id="nav-analisis"><span class="icon">📊</span> Analisis Detallado</div>
+      <div class="sidebar-label" style="margin-top:12px">Resumen Rapido</div>
+      <div class="sidebar-item" style="cursor:default"><span class="icon">📋</span> Total Remisiones<span class="sidebar-badge" id="total-rem-badge">0</span></div>
+      <div class="sidebar-item" style="cursor:default"><span class="icon">⏳</span> Prom. Coordinadores<span class="sidebar-badge" id="prom-coord-badge" style="background:var(--cyan)">--</span></div>
+      <div class="sidebar-item" style="cursor:default"><span class="icon">🕐</span> Prom. Contratistas<span class="sidebar-badge" id="prom-cont-badge" style="background:var(--orange)">--</span></div>
+    </div>
+
+    <div class="main">
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header"><div><div class="page-title">Dashboard General</div><div class="page-sub">Metricas de tiempos de remisiones y radicacion</div></div></div>
+        <div class="kpi-mini-grid">
+          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-total-rem">--</div><div class="kpi-mini-label">Total Remisiones</div></div>
+          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-prom-coord">--</div><div class="kpi-mini-label">Prom. Coordinadores (hrs)</div></div>
+          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-prom-cont">--</div><div class="kpi-mini-label">Prom. Contratistas (hrs)</div></div>
+          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-diferencia">--</div><div class="kpi-mini-label">Diferencia Promedio</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-card" style="--accent-color:var(--cyan)"><div class="metric-icon">⏱</div><div class="metric-value" id="metric-coord">--</div><div class="metric-label">Tiempo Promedio Coordinadores</div><div class="metric-sub" id="metric-coord-sub">Tiempo desde creacion hasta asignacion</div></div>
+          <div class="metric-card" style="--accent-color:var(--orange)"><div class="metric-icon">🕐</div><div class="metric-value" id="metric-cont">--</div><div class="metric-label">Tiempo Promedio Contratistas</div><div class="metric-sub" id="metric-cont-sub">Tiempo desde asignacion hasta radicacion</div></div>
+          <div class="metric-card" style="--accent-color:var(--purple)"><div class="metric-icon">📈</div><div class="metric-value" id="metric-eficiencia">--</div><div class="metric-label">Eficiencia General</div><div class="metric-sub" id="metric-eficiencia-sub">Coordinadores vs Contratistas</div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card" style="grid-column:1/-1">
+            <div class="chart-card-title"><span>🏆 Top 10 Contratistas que Mas Demoran</span><span class="badge-count">Basado en tiempo de radicacion</span></div>
+            <div class="bar-chart" id="top10-chart"></div>
+          </div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card"><div class="chart-card-title"><span>👤 Tiempos por Coordinador</span><span class="badge-count">Creacion de ordenes</span></div><div class="bar-chart" id="coord-chart"></div></div>
+          <div class="chart-card"><div class="chart-card-title"><span>🏗 Tiempos por Contratista</span><span class="badge-count">Radicacion</span></div><div class="bar-chart" id="cont-chart"></div></div>
+        </div>
+      </div>
+
+      <!-- CONTROL DEL TIEMPO -->
+      <div class="page" id="page-control-tiempo">
+        <div class="page-header"><div><div class="page-title">Control del Tiempo</div><div class="page-sub">Suite de seguimiento de remisiones y tiempos de respuesta</div></div></div>
+        <div class="filters-row">
+          <div class="filter-group"><label class="filter-label">Coordinador</label><select class="filter-select" id="filter-coord" onchange="renderControlTiempo()"><option value="">Todos</option></select></div>
+          <div class="filter-group"><label class="filter-label">Contratista</label><select class="filter-select" id="filter-cont" onchange="renderControlTiempo()"><option value="">Todos</option></select></div>
+          <div class="filter-group"><label class="filter-label">Estado</label><select class="filter-select" id="filter-estado" onchange="renderControlTiempo()"><option value="">Todos</option><option>Pendiente</option><option>En Proceso</option><option>Radicado</option><option>Aprobado</option><option>Rechazado</option></select></div>
+          <div class="filter-group"><label class="filter-label">Desde</label><input type="date" class="filter-input" id="filter-desde" onchange="renderControlTiempo()"></div>
+          <div class="filter-group"><label class="filter-label">Hasta</label><input type="date" class="filter-input" id="filter-hasta" onchange="renderControlTiempo()"></div>
+          <div class="filter-group" style="margin-top:auto"><button class="btn btn-outline btn-sm" onclick="clearFilters()">Limpiar Filtros</button></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card" style="--accent-color:var(--cyan)"><div class="stat-icon">📋</div><div class="stat-value" id="ctrl-total">--</div><div class="stat-label">Remisiones Filtradas</div></div>
+          <div class="stat-card" style="--accent-color:var(--green)"><div class="stat-icon">✓</div><div class="stat-value" id="ctrl-radicadas">--</div><div class="stat-label">Radicadas</div></div>
+          <div class="stat-card" style="--accent-color:var(--yellow)"><div class="stat-icon">⏳</div><div class="stat-value" id="ctrl-pendientes">--</div><div class="stat-label">Pendientes</div></div>
+          <div class="stat-card" style="--accent-color:var(--red)"><div class="stat-icon">⚠</div><div class="stat-value" id="ctrl-demoradas">--</div><div class="stat-label">Demoradas (>24h)</div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-top"><span class="table-title">📋 Registro de Remisiones</span><div class="search-box"><input type="text" id="search-remisiones" placeholder="Buscar remision..." oninput="renderControlTiempo()"></div></div>
+          <table class="data">
+            <thead><tr><th>#</th><th>Remision</th><th>Coordinador</th><th>T. Creacion (E)</th><th>Contratista</th><th>T. Radicacion (G)</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Observaciones</th></tr></thead>
+            <tbody id="control-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COORDINADORES -->
+      <div class="page" id="page-coordinadores">
+        <div class="page-header"><div><div class="page-title">Coordinadores</div><div class="page-sub">Analisis de tiempos de creacion de ordenes por coordinador</div></div></div>
+        <div class="chart-card" style="margin-bottom:24px"><div class="chart-card-title"><span>📊 Ranking de Coordinadores por Tiempo de Respuesta</span></div><div class="bar-chart" id="coord-ranking-chart"></div></div>
+        <div class="table-wrap">
+          <div class="table-top"><span class="table-title">👤 Detalle por Coordinador</span></div>
+          <table class="data">
+            <thead><tr><th>Coordinador</th><th>Remisiones</th><th>Tiempo Promedio (hrs)</th><th>Minimo</th><th>Maximo</th><th>Eficiencia</th></tr></thead>
+            <tbody id="coord-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CONTRATISTAS -->
+      <div class="page" id="page-contratistas">
+        <div class="page-header"><div><div class="page-title">Contratistas</div><div class="page-sub">Analisis de tiempos de radicacion por contratista</div></div></div>
+        <div class="chart-card" style="margin-bottom:24px"><div class="chart-card-title"><span>🏗 Ranking de Contratistas por Tiempo de Radicacion</span></div><div class="bar-chart" id="cont-ranking-chart"></div></div>
+        <div class="table-wrap">
+          <div class="table-top"><span class="table-title">🏗 Detalle por Contratista</span></div>
+          <table class="data">
+            <thead><tr><th>Contratista</th><th>Remisiones</th><th>Tiempo Promedio (hrs)</th><th>Minimo</th><th>Maximo</th><th>Estado</th></tr></thead>
+            <tbody id="cont-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANALISIS -->
+      <div class="page" id="page-analisis">
+        <div class="page-header"><div><div class="page-title">Analisis Detallado</div><div class="page-sub">Metricas avanzadas y tendencias de tiempos</div></div></div>
+        <div class="section-divider"><span class="section-title">Distribucion de Tiempos</span></div>
+        <div class="chart-row">
+          <div class="chart-card"><div class="chart-card-title">⏱ Distribucion Tiempos Coordinadores</div><div id="dist-coord" style="padding:20px 0"></div></div>
+          <div class="chart-card"><div class="chart-card-title">🕐 Distribucion Tiempos Contratistas</div><div id="dist-cont" style="padding:20px 0"></div></div>
+        </div>
+        <div class="section-divider"><span class="section-title">Tendencias y Alertas</span></div>
+        <div class="stats-grid">
+          <div class="stat-card" style="--accent-color:var(--red)"><div class="stat-icon">🚨</div><div class="stat-value small" id="alertas-criticas">--</div><div class="stat-label">Alertas Criticas</div><div class="stat-sub">Remisiones >48h sin radicar</div></div>
+          <div class="stat-card" style="--accent-color:var(--yellow)"><div class="stat-icon">⚡</div><div class="stat-value small" id="alertas-media">--</div><div class="stat-label">Alertas Medias</div><div class="stat-sub">Remisiones >24h sin radicar</div></div>
+          <div class="stat-card" style="--accent-color:var(--green)"><div class="stat-icon">🎯</div><div class="stat-value small" id="meta-cumplida">--</div><div class="stat-label">Meta Cumplida</div><div class="stat-sub">Radicadas en <12h</div></div>
+          <div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-icon">📊</div><div class="stat-value small" id="prom-semana">--</div><div class="stat-label">Promedio Semanal</div><div class="stat-sub">Ultimos 7 dias</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"><span class="t-icon" id="t-icon">✓</span><span id="t-msg"></span></div>
+
+  <script>
+    const CONFIG_SYNC_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI';
+    const STORE_KEY = 'dc1_remisiones_data';
+    let DB = { remisiones: [] };
+
+    function loadDB() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (raw) { DB = JSON.parse(raw); }
+        if (!DB.remisiones || DB.remisiones.length === 0) {
+          DB.remisiones = generateSampleData();
+          saveDB();
+        }
+      } catch (e) { DB.remisiones = generateSampleData(); }
+    }
+
+    function saveDB() {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {}
+    }
+
+    function generateSampleData() {
+      const coordinadores = ['Ana Martinez', 'Carlos Lopez', 'Diana Ruiz', 'Eduardo Soto', 'Fernanda Vega'];
+      const contratistas = ['Constructora Norte', 'Servicios Electricos SA', 'HVAC Solutions', 'Refrigeracion Industrial', 'Mantenimiento Plus', 'Obras Civiles del Valle', 'Instalaciones Tecnicas', 'Proyectos Integrales'];
+      const estados = ['Pendiente', 'En Proceso', 'Radicado', 'Aprobado', 'Rechazado'];
+      const data = [];
+      for (let i = 1; i <= 150; i++) {
+        const coord = coordinadores[Math.floor(Math.random() * coordinadores.length)];
+        const cont = contratistas[Math.floor(Math.random() * contratistas.length)];
+        const estado = estados[Math.floor(Math.random() * estados.length)];
+        let tiempoCoord = Math.random() * 12 + 2;
+        let tiempoCont = Math.random() * 48 + 4;
+        if (cont === 'Constructora Norte') tiempoCont += 20;
+        if (cont === 'Servicios Electricos SA') tiempoCont += 15;
+        if (cont === 'HVAC Solutions') tiempoCont += 10;
+        if (coord === 'Ana Martinez') tiempoCoord *= 0.7;
+        if (coord === 'Carlos Lopez') tiempoCoord *= 0.8;
+        const fecha = new Date(2026, 4, Math.floor(Math.random() * 30) + 1);
+        data.push({
+          id: 'REM-' + String(i).padStart(4, '0'),
+          fecha: fecha.toISOString().split('T')[0],
+          coordinador: coord,
+          contratista: cont,
+          tiempoCoordinador: Math.round(tiempoCoord * 10) / 10,
+          tiempoContratista: Math.round(tiempoCont * 10) / 10,
+          tiempoTotal: Math.round((tiempoCoord + tiempoCont) * 10) / 10,
+          estado: estado,
+          observaciones: estado === 'Rechazado' ? 'Documentacion incompleta' : (estado === 'Pendiente' ? 'En espera de asignacion' : '')
+        });
+      }
+      return data;
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const btn = document.getElementById('theme-toggle');
+      const isLight = body.classList.toggle('light-mode');
+      btn.textContent = isLight ? '☀️' : '🌙';
+      localStorage.setItem('dc1_theme', isLight ? 'light' : 'dark');
+      toast('Modo ' + (isLight ? 'Claro' : 'Oscuro') + ' activado');
+    }
+
+    function loadTheme() {
+      const theme = localStorage.getItem('dc1_theme');
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+    }
+
+    async function syncWithGoogleSheets() {
+      const url = CONFIG_SYNC_URL;
+      if (!url || url === 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
+        toast('Configura la URL de Google Apps Script en el codigo', 'error');
+        return;
+      }
+      showLoading('Sincronizando con Google Sheets...');
+      try {
+        const res = await fetch(url + '?action=getData');
+        const data = await res.json();
+        if (data.remisiones && Array.isArray(data.remisiones)) {
+          DB.remisiones = data.remisiones.map(r => ({
+            id: r.id || r.ID_REMISION || '',
+            fecha: r.fecha || r.FECHA || '',
+            coordinador: r.coordinador || r.COORDINADOR || '',
+            contratista: r.contratista || r.CONTRATISTA || '',
+            tiempoCoordinador: parseFloat(r.tiempoCoordinador || r.TIEMPO_COORDINADOR || 0),
+            tiempoContratista: parseFloat(r.tiempoContratista || r.TIEMPO_CONTRATISTA || 0),
+            tiempoTotal: parseFloat(r.tiempoTotal || r.TIEMPO_TOTAL || 0),
+            estado: r.estado || r.ESTADO || 'Pendiente',
+            observaciones: r.observaciones || r.OBSERVACIONES || ''
+          }));
+          saveDB();
+          renderAll();
+          updateSyncStatus(true);
+          toast('Sincronizacion exitosa: ' + DB.remisiones.length + ' remisiones cargadas ✓');
+        }
+      } catch (err) {
+        updateSyncStatus(false);
+        toast('Error de sincronizacion: ' + err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function updateSyncStatus(online) {
+      const dot = document.getElementById('sync-dot');
+      const text = document.getElementById('sync-text');
+      if (online) { dot.classList.remove('offline'); text.textContent = 'Sincronizado'; }
+      else { dot.classList.add('offline'); text.textContent = 'Sin conexion'; }
+    }
+
+    function showLoading(text) {
+      const overlay = document.getElementById('loading-overlay');
+      overlay.querySelector('.loading-text').textContent = text;
+      overlay.classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+      document.getElementById('page-' + pageId).classList.add('active');
+      const navEl = document.getElementById('nav-' + pageId);
+      if (navEl) navEl.classList.add('active');
+      if (pageId === 'dashboard') renderDashboard();
+      if (pageId === 'control-tiempo') renderControlTiempo();
+      if (pageId === 'coordinadores') renderCoordinadores();
+      if (pageId === 'contratistas') renderContratistas();
+      if (pageId === 'analisis') renderAnalisis();
+    }
+
+    function calcularPromedioCoordinadores() {
+      if (!DB.remisiones.length) return 0;
+      const sum = DB.remisiones.reduce((acc, r) => acc + (r.tiempoCoordinador || 0), 0);
+      return Math.round((sum / DB.remisiones.length) * 10) / 10;
+    }
+
+    function calcularPromedioContratistas() {
+      if (!DB.remisiones.length) return 0;
+      const sum = DB.remisiones.reduce((acc, r) => acc + (r.tiempoContratista || 0), 0);
+      return Math.round((sum / DB.remisiones.length) * 10) / 10;
+    }
+
+    function getTop10ContratistasLentos() {
+      const grouped = {};
+      DB.remisiones.forEach(r => {
+        if (!grouped[r.contratista]) grouped[r.contratista] = { sum: 0, count: 0 };
+        grouped[r.contratista].sum += r.tiempoContratista || 0;
+        grouped[r.contratista].count++;
+      });
+      return Object.entries(grouped)
+        .map(([name, data]) => ({ name, promedio: Math.round((data.sum / data.count) * 10) / 10, count: data.count }))
+        .sort((a, b) => b.promedio - a.promedio)
+        .slice(0, 10);
+    }
+
+    function getCoordinadoresStats() {
+      const grouped = {};
+      DB.remisiones.forEach(r => {
+        if (!grouped[r.coordinador]) grouped[r.coordinador] = { sum: 0, count: 0, min: Infinity, max: 0 };
+        const t = r.tiempoCoordinador || 0;
+        grouped[r.coordinador].sum += t;
+        grouped[r.coordinador].count++;
+        grouped[r.coordinador].min = Math.min(grouped[r.coordinador].min, t);
+        grouped[r.coordinador].max = Math.max(grouped[r.coordinador].max, t);
+      });
+      return Object.entries(grouped)
+        .map(([name, data]) => ({ name, promedio: Math.round((data.sum / data.count) * 10) / 10, count: data.count, min: data.min === Infinity ? 0 : data.min, max: data.max }))
+        .sort((a, b) => a.promedio - b.promedio);
+    }
+
+    function getContratistasStats() {
+      const grouped = {};
+      DB.remisiones.forEach(r => {
+        if (!grouped[r.contratista]) grouped[r.contratista] = { sum: 0, count: 0, min: Infinity, max: 0 };
+        const t = r.tiempoContratista || 0;
+        grouped[r.contratista].sum += t;
+        grouped[r.contratista].count++;
+        grouped[r.contratista].min = Math.min(grouped[r.contratista].min, t);
+        grouped[r.contratista].max = Math.max(grouped[r.contratista].max, t);
+      });
+      return Object.entries(grouped)
+        .map(([name, data]) => ({ name, promedio: Math.round((data.sum / data.count) * 10) / 10, count: data.count, min: data.min === Infinity ? 0 : data.min, max: data.max }))
+        .sort((a, b) => a.promedio - b.promedio);
+    }
+
+    function renderDashboard() {
+      const promCoord = calcularPromedioCoordinadores();
+      const promCont = calcularPromedioContratistas();
+      const diferencia = Math.round((promCont - promCoord) * 10) / 10;
+      const eficiencia = promCoord > 0 ? Math.round((promCoord / (promCoord + promCont)) * 100) : 0;
+
+      document.getElementById('kpi-total-rem').textContent = DB.remisiones.length;
+      document.getElementById('kpi-prom-coord').textContent = promCoord + 'h';
+      document.getElementById('kpi-prom-cont').textContent = promCont + 'h';
+      document.getElementById('kpi-diferencia').textContent = diferencia + 'h';
+      document.getElementById('kpi-diferencia').style.color = diferencia > 0 ? 'var(--red)' : 'var(--green)';
+
+      document.getElementById('metric-coord').textContent = promCoord + 'h';
+      document.getElementById('metric-coord-sub').textContent = 'Basado en ' + DB.remisiones.length + ' remisiones';
+      document.getElementById('metric-cont').textContent = promCont + 'h';
+      document.getElementById('metric-cont-sub').textContent = 'Basado en ' + DB.remisiones.length + ' remisiones';
+      document.getElementById('metric-eficiencia').textContent = eficiencia + '%';
+      document.getElementById('metric-eficiencia-sub').textContent = promCoord < promCont ? 'Coordinadores mas eficientes' : 'Contratistas mas eficientes';
+
+      const top10 = getTop10ContratistasLentos();
+      const maxVal = top10[0]?.promedio || 1;
+      document.getElementById('top10-chart').innerHTML = top10.map((c, i) => {
+        const pct = (c.promedio / maxVal) * 100;
+        const color = i < 3 ? 'linear-gradient(90deg, #FF1744, #FF6090)' : 'linear-gradient(90deg, #FF6D00, #FFD600)';
+        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + (i + 1) + '. ' + c.name.substring(0, 20) + (c.name.length > 20 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:50px;text-align:right">' + c.count + ' rem.</span></div>';
+      }).join('');
+
+      const coordStats = getCoordinadoresStats();
+      const maxCoord = coordStats[coordStats.length - 1]?.promedio || 1;
+      document.getElementById('coord-chart').innerHTML = coordStats.map(c => {
+        const pct = (c.promedio / maxCoord) * 100;
+        const color = c.promedio <= promCoord ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FFD600, #FF6D00)';
+        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 15) + (c.name.length > 15 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:50px;text-align:right">' + c.count + '</span></div>';
+      }).join('');
+
+      const contStats = getContratistasStats();
+      const maxCont = contStats[contStats.length - 1]?.promedio || 1;
+      document.getElementById('cont-chart').innerHTML = contStats.map(c => {
+        const pct = (c.promedio / maxCont) * 100;
+        const color = c.promedio <= promCont ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FF1744, #FF6090)';
+        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 15) + (c.name.length > 15 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:50px;text-align:right">' + c.count + '</span></div>';
+      }).join('');
+
+      updateSidebarStats();
+    }
+
+    function updateSidebarStats() {
+      document.getElementById('rem-count-badge').textContent = DB.remisiones.length;
+      document.getElementById('total-rem-badge').textContent = DB.remisiones.length;
+      document.getElementById('prom-coord-badge').textContent = calcularPromedioCoordinadores() + 'h';
+      document.getElementById('prom-cont-badge').textContent = calcularPromedioContratistas() + 'h';
+    }
+
+    function populateFilters() {
+      const coords = [...new Set(DB.remisiones.map(r => r.coordinador))].sort();
+      const conts = [...new Set(DB.remisiones.map(r => r.contratista))].sort();
+      const coordSelect = document.getElementById('filter-coord');
+      const contSelect = document.getElementById('filter-cont');
+      coordSelect.innerHTML = '<option value="">Todos</option>' + coords.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+      contSelect.innerHTML = '<option value="">Todos</option>' + conts.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+    }
+
+    function renderControlTiempo() {
+      populateFilters();
+      const filterCoord = document.getElementById('filter-coord').value;
+      const filterCont = document.getElementById('filter-cont').value;
+      const filterEstado = document.getElementById('filter-estado').value;
+      const filterDesde = document.getElementById('filter-desde').value;
+      const filterHasta = document.getElementById('filter-hasta').value;
+      const searchTerm = document.getElementById('search-remisiones').value.toLowerCase();
+
+      let filtered = DB.remisiones.filter(r => {
+        if (filterCoord && r.coordinador !== filterCoord) return false;
+        if (filterCont && r.contratista !== filterCont) return false;
+        if (filterEstado && r.estado !== filterEstado) return false;
+        if (filterDesde && r.fecha < filterDesde) return false;
+        if (filterHasta && r.fecha > filterHasta) return false;
+        if (searchTerm && !r.id.toLowerCase().includes(searchTerm) && !r.coordinador.toLowerCase().includes(searchTerm) && !r.contratista.toLowerCase().includes(searchTerm)) return false;
+        return true;
+      });
+
+      document.getElementById('ctrl-total').textContent = filtered.length;
+      document.getElementById('ctrl-radicadas').textContent = filtered.filter(r => r.estado === 'Radicado' || r.estado === 'Aprobado').length;
+      document.getElementById('ctrl-pendientes').textContent = filtered.filter(r => r.estado === 'Pendiente' || r.estado === 'En Proceso').length;
+      document.getElementById('ctrl-demoradas').textContent = filtered.filter(r => (r.tiempoContratista || 0) > 24).length;
+
+      document.getElementById('control-tbody').innerHTML = filtered.map((r, i) => {
+        const timeClass = (r.tiempoContratista || 0) > 24 ? 'time-slow' : ((r.tiempoContratista || 0) > 12 ? 'time-medium' : 'time-fast');
+        const estadoClass = r.estado === 'Radicado' || r.estado === 'Aprobado' ? 'badge-green' : r.estado === 'Pendiente' ? 'badge-yellow' : r.estado === 'Rechazado' ? 'badge-red' : 'badge-blue';
+        return '<tr><td>' + (i + 1) + '</td><td><strong>' + r.id + '</strong></td><td>' + r.coordinador + '</td><td>' + r.tiempoCoordinador + 'h</td><td>' + r.contratista + '</td><td class="' + timeClass + '">' + r.tiempoContratista + 'h</td><td>' + r.tiempoTotal + 'h</td><td><span class="badge ' + estadoClass + '">' + r.estado + '</span></td><td>' + r.fecha + '</td><td style="color:var(--muted);font-size:11px">' + (r.observaciones || '-') + '</td></tr>';
+      }).join('');
+    }
+
+    function clearFilters() {
+      document.getElementById('filter-coord').value = '';
+      document.getElementById('filter-cont').value = '';
+      document.getElementById('filter-estado').value = '';
+      document.getElementById('filter-desde').value = '';
+      document.getElementById('filter-hasta').value = '';
+      document.getElementById('search-remisiones').value = '';
+      renderControlTiempo();
+    }
+
+    function renderCoordinadores() {
+      const stats = getCoordinadoresStats();
+      const maxVal = stats[stats.length - 1]?.promedio || 1;
+      const promCoord = calcularPromedioCoordinadores();
+
+      document.getElementById('coord-ranking-chart').innerHTML = stats.map(c => {
+        const pct = (c.promedio / maxVal) * 100;
+        const color = c.promedio <= promCoord ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FFD600, #FF6D00)';
+        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 18) + (c.name.length > 18 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:60px;text-align:right">' + c.count + ' rem.</span></div>';
+      }).join('');
+
+      document.getElementById('coord-tbody').innerHTML = stats.map(c => {
+        const eficiencia = c.promedio <= 6 ? 'Alta' : c.promedio <= 10 ? 'Media' : 'Baja';
+        const eficColor = c.promedio <= 6 ? 'var(--green)' : c.promedio <= 10 ? 'var(--yellow)' : 'var(--red)';
+        return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.count + '</td><td>' + c.promedio + 'h</td><td>' + c.min + 'h</td><td>' + c.max + 'h</td><td style="color:' + eficColor + ';font-weight:600">' + eficiencia + '</td></tr>';
+      }).join('');
+    }
+
+    function renderContratistas() {
+      const stats = getContratistasStats();
+      const maxVal = stats[stats.length - 1]?.promedio || 1;
+      const promCont = calcularPromedioContratistas();
+
+      document.getElementById('cont-ranking-chart').innerHTML = stats.map(c => {
+        const pct = (c.promedio / maxVal) * 100;
+        const color = c.promedio <= promCont ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FF1744, #FF6090)';
+        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 18) + (c.name.length > 18 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:60px;text-align:right">' + c.count + ' rem.</span></div>';
+      }).join('');
+
+      document.getElementById('cont-tbody').innerHTML = stats.map(c => {
+        const estado = c.promedio <= 12 ? 'Excelente' : c.promedio <= 24 ? 'Regular' : 'Critico';
+        const estadoColor = c.promedio <= 12 ? 'var(--green)' : c.promedio <= 24 ? 'var(--yellow)' : 'var(--red)';
+        return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.count + '</td><td>' + c.promedio + 'h</td><td>' + c.min + 'h</td><td>' + c.max + 'h</td><td style="color:' + estadoColor + ';font-weight:600">' + estado + '</td></tr>';
+      }).join('');
+    }
+
+    function renderAnalisis() {
+      const criticas = DB.remisiones.filter(r => (r.tiempoContratista || 0) > 48).length;
+      const medias = DB.remisiones.filter(r => (r.tiempoContratista || 0) > 24 && (r.tiempoContratista || 0) <= 48).length;
+      const meta = DB.remisiones.filter(r => (r.tiempoContratista || 0) < 12 && (r.estado === 'Radicado' || r.estado === 'Aprobado')).length;
+      const hoy = new Date();
+      const semanaAtras = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const remSemana = DB.remisiones.filter(r => new Date(r.fecha) >= semanaAtras);
+      const promSemana = remSemana.length ? Math.round((remSemana.reduce((acc, r) => acc + (r.tiempoContratista || 0), 0) / remSemana.length) * 10) / 10 : 0;
+
+      document.getElementById('alertas-criticas').textContent = criticas;
+      document.getElementById('alertas-media').textContent = medias;
+      document.getElementById('meta-cumplida').textContent = meta;
+      document.getElementById('prom-semana').textContent = promSemana + 'h';
+
+      const rangosCoord = { '0-4h': 0, '4-8h': 0, '8-12h': 0, '12-24h': 0, '>24h': 0 };
+      DB.remisiones.forEach(r => {
+        const t = r.tiempoCoordinador || 0;
+        if (t <= 4) rangosCoord['0-4h']++;
+        else if (t <= 8) rangosCoord['4-8h']++;
+        else if (t <= 12) rangosCoord['8-12h']++;
+        else if (t <= 24) rangosCoord['12-24h']++;
+        else rangosCoord['>24h']++;
+      });
+      const maxCoord = Math.max(...Object.values(rangosCoord)) || 1;
+      document.getElementById('dist-coord').innerHTML = Object.entries(rangosCoord).map(([label, count]) => {
+        const pct = (count / maxCoord) * 100;
+        return '<div class="bar-row"><span class="bar-label">' + label + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:linear-gradient(90deg, var(--cyan), var(--blue))">' + count + '</div></div></div>';
+      }).join('');
+
+      const rangosCont = { '0-8h': 0, '8-16h': 0, '16-24h': 0, '24-48h': 0, '>48h': 0 };
+      DB.remisiones.forEach(r => {
+        const t = r.tiempoContratista || 0;
+        if (t <= 8) rangosCont['0-8h']++;
+        else if (t <= 16) rangosCont['8-16h']++;
+        else if (t <= 24) rangosCont['16-24h']++;
+        else if (t <= 48) rangosCont['24-48h']++;
+        else rangosCont['>48h']++;
+      });
+      const maxCont = Math.max(...Object.values(rangosCont)) || 1;
+      document.getElementById('dist-cont').innerHTML = Object.entries(rangosCont).map(([label, count]) => {
+        const pct = (count / maxCont) * 100;
+        return '<div class="bar-row"><span class="bar-label">' + label + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:linear-gradient(90deg, var(--orange), var(--red))">' + count + '</div></div></div>';
+      }).join('');
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderControlTiempo();
+      renderCoordinadores();
+      renderContratistas();
+      renderAnalisis();
+    }
+
+    function toast(msg, type) {
+      const el = document.getElementById('toast'), ic = document.getElementById('t-icon'), mc = document.getElementById('t-msg');
+      ic.textContent = type === 'error' ? '✗' : '✓';
+      el.style.borderColor = type === 'error' ? '#FF1744' : '#00C853';
+      mc.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    function exportData() {
+      const csv = 'ID,FECHA,COORDINADOR,CONTRATISTA,TIEMPO_COORDINADOR,TIEMPO_CONTRATISTA,TIEMPO_TOTAL,ESTADO,OBSERVACIONES\n' +
+        DB.remisiones.map(r => [r.id, r.fecha, r.coordinador, r.contratista, r.tiempoCoordinador, r.tiempoContratista, r.tiempoTotal, r.estado, r.observaciones].join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'Control_Remisiones_DC1.csv';
+      link.click();
+      toast('Datos exportados ✓');
+    }
+
+    loadTheme();
+    loadDB();
+    renderAll();
+  </script>
+</body>
+</html>

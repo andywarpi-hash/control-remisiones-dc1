@@ -651,6 +651,7 @@
       <span id="sync-label">Sin configurar</span>
     </div>
     <button class="btn btn-outline btn-sm" onclick="syncData()">⟳ Sincronizar</button>
+    <a class="btn btn-ghost btn-sm" href="https://docs.google.com/spreadsheets/d/13nG8bnc67GwnNhcz-Ye5qVf1kyYQkh54KZJWlTrvBS4/edit?gid=473571231#gid=473571231" target="_blank" id="btn-gsheets-topbar" style="text-decoration: none;"><span style="color:#0f9d58; margin-right: 2px;">📊</span> Gsheets</a>
     <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
     <button class="btn btn-icon" onclick="toggleTheme()" id="theme-btn" title="Modo claro/oscuro">🌙</button>
   </div>
@@ -707,6 +708,7 @@
     </div>
     <div class="ph-actions">
       <button class="btn btn-neon btn-sm" onclick="syncData()">⟳ Actualizar</button>
+      <a class="btn btn-outline btn-sm" href="https://docs.google.com/spreadsheets/d/13nG8bnc67GwnNhcz-Ye5qVf1kyYQkh54KZJWlTrvBS4/edit?gid=473571231#gid=473571231" target="_blank" id="btn-gsheets-dash" style="text-decoration: none;"><span style="color:#0f9d58; margin-right: 2px;">📊</span> Gsheets</a>
     </div>
   </div>
 
@@ -938,6 +940,10 @@
       <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/XXXXXX/exec"/>
     </div>
     <div class="config-row" style="margin-bottom:12px;">
+      <label>Google Sheet URL</label>
+      <input type="text" id="cfg-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/XXXXXX/edit"/>
+    </div>
+    <div class="config-row" style="margin-bottom:12px;">
       <label>Rango de Datos</label>
       <input type="text" id="cfg-range" placeholder="Hoja1!A:Z (opcional, si el script lo soporta)"/>
     </div>
@@ -1022,8 +1028,11 @@ const STORE = 'dc1_v1';
 const CFG   = 'dc1_cfg';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwFKRcRGWceMnuVjWNKocLGLsIuqGUwGqtEfZa7Eulx3weUGzG0I5vh7iSMft-_Y2P_/exec';
 
+const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/13nG8bnc67GwnNhcz-Ye5qVf1kyYQkh54KZJWlTrvBS4/edit?gid=473571231#gid=473571231';
+
 let cfg = {
   url: DEFAULT_URL,
+  sheetUrl: DEFAULT_SHEET_URL,
   range: '',
   interval: 0
 };
@@ -1033,10 +1042,12 @@ let cfg = {
 ═══════════════════════════════════════════════════════════════ */
 function saveConfig() {
   cfg.url      = document.getElementById('cfg-url').value.trim();
+  cfg.sheetUrl = document.getElementById('cfg-sheet-url').value.trim();
   cfg.range    = document.getElementById('cfg-range').value.trim();
   cfg.interval = parseInt(document.getElementById('cfg-interval').value) || 0;
   localStorage.setItem(CFG, JSON.stringify(cfg));
   setupAutoSync();
+  updateGsheetsLinks();
   toast('Configuración guardada ✓');
   if (cfg.url) syncData();
 }
@@ -1051,12 +1062,26 @@ function loadConfig() {
   if (!cfg.url) {
     cfg.url = DEFAULT_URL;
   }
+  if (!cfg.sheetUrl) {
+    cfg.sheetUrl = DEFAULT_SHEET_URL;
+  }
   const cfgUrl = document.getElementById('cfg-url');
   if (cfgUrl) cfgUrl.value = cfg.url;
+  const cfgSheetUrl = document.getElementById('cfg-sheet-url');
+  if (cfgSheetUrl) cfgSheetUrl.value = cfg.sheetUrl || '';
   const cfgRange = document.getElementById('cfg-range');
   if (cfgRange) cfgRange.value = cfg.range || '';
   const cfgInterval = document.getElementById('cfg-interval');
   if (cfgInterval) cfgInterval.value = cfg.interval || '';
+  updateGsheetsLinks();
+}
+
+function updateGsheetsLinks() {
+  const url = cfg.sheetUrl || DEFAULT_SHEET_URL;
+  const linkTopbar = document.getElementById('btn-gsheets-topbar');
+  if (linkTopbar) linkTopbar.href = url;
+  const linkDash = document.getElementById('btn-gsheets-dash');
+  if (linkDash) linkDash.href = url;
 }
 
 function setupAutoSync() {

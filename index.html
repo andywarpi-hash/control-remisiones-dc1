@@ -1,669 +1,1920 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Control de Remisiones DC1</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Control de Remisiones DC1 — Olímpica</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    /* ═══ VARIABLES ═══ */
     :root {
-      --navy: #0D1B2A; --navy2: #112240; --navy3: #0a1628;
-      --blue: #1565C0; --blue2: #1976D2; --cyan: #00B4D8;
-      --green: #00c853; --yellow: #ffd600; --red: #ff1744;
-      --orange: #FF6D00; --purple: #7C4DFF;
-      --bg: #080F1A; --surface: #0D1B2A; --card: #111F33;
-      --border: #1E3A5F; --text: #E8F0FE; --muted: #7B9CC4;
-      --accent: #00B4D8; --shadow: rgba(0,0,0,0.5);
+      --bg:        #050d0a;
+      --surface:   #091410;
+      --card:      #0d1f1a;
+      --card2:     #112920;
+      --border:    #1a3d30;
+      --border2:   #0f2a20;
+      --text:      #e8f5ee;
+      --muted:     #5a8a72;
+      --muted2:    #3a5e4a;
+
+      /* green neon palette */
+      --g1:   #00ff88;   /* neon primary */
+      --g2:   #00e676;   /* neon secondary */
+      --g3:   #00c853;   /* green mid */
+      --g4:   #1b5e20;   /* dark green */
+      --lime: #b9f542;   /* lime accent */
+      --cyan: #00e5cc;   /* teal accent */
+
+      /* state colors */
+      --ok:   #00e676;
+      --warn: #ffd600;
+      --crit: #ff1744;
+      --info: #00b0ff;
+      --gray: #607d8b;
+
+      --shadow: rgba(0,255,136,.04);
+      --shadow2: rgba(0,0,0,.6);
+      --radius: 12px;
+      --topbar-h: 62px;
+      --sidebar-w: 230px;
     }
+
     body.light-mode {
-      --navy: #f0f4f8; --navy2: #ffffff; --navy3: #e2e8f0;
-      --bg: #f8fafc; --surface: #ffffff; --card: #ffffff;
-      --border: #e2e8f0; --text: #1e293b; --muted: #64748b;
-      --accent: #1565C0; --shadow: rgba(0,0,0,0.05);
+      --bg:      #f0f7f2;
+      --surface: #ffffff;
+      --card:    #ffffff;
+      --card2:   #f4faf6;
+      --border:  #c8e6c9;
+      --border2: #e0f0e6;
+      --text:    #1b3a28;
+      --muted:   #4a7860;
+      --muted2:  #8ab89a;
+      --g1:      #00897b;
+      --g2:      #00c853;
+      --g3:      #2e7d32;
+      --g4:      #e8f5e9;
+      --cyan:    #00796b;
+      --shadow:  rgba(0,137,91,.06);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
-    .topbar { background: linear-gradient(90deg, var(--navy) 0%, var(--navy3) 100%); border-bottom: 1px solid var(--border); padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--blue), var(--cyan)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Rajdhani'; font-weight: 700; color: #fff; font-size: 16px; }
-    .logo-text { font-family: 'Rajdhani'; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-    .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-    .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; letter-spacing: .5px; cursor: pointer; border: none; transition: all .2s; text-transform: uppercase; font-family: 'Inter'; }
-    .btn-primary { background: linear-gradient(135deg, var(--blue), var(--blue2)); color: #fff; }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(21,101,192,.5); }
-    .btn-outline { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
-    .btn-outline:hover { background: rgba(0,180,216,.1); }
-    .btn-success { background: linear-gradient(135deg, #00897B, #00C853); color: #fff; }
-    .btn-sm { padding: 5px 10px; font-size: 11px; }
-    .layout { display: flex; min-height: calc(100vh - 60px); }
-    .sidebar { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; }
-    .sidebar-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 12px 20px 4px; font-weight: 600; }
-    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; cursor: pointer; transition: all .2s; font-size: 13px; color: var(--muted); border-left: 3px solid transparent; font-weight: 500; }
-    .sidebar-item:hover { background: rgba(21,101,192,0.08); color: var(--text); }
-    .sidebar-item.active { background: rgba(21,101,192,0.12); color: var(--cyan); border-left-color: var(--cyan); }
-    .sidebar-item .icon { width: 20px; text-align: center; font-size: 15px; }
-    .sidebar-badge { margin-left: auto; background: var(--blue); color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
-    .main { flex: 1; padding: 24px; overflow-x: auto; }
-    .page { display: none; }
-    .page.active { display: block; }
-    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
-    .page-title { font-family: 'Rajdhani'; font-size: 28px; font-weight: 700; }
-    .page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; letter-spacing: .5px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; position: relative; overflow: hidden; transition: transform .2s; }
-    .stat-card:hover { transform: translateY(-2px); }
-    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent-color, var(--cyan)); }
-    .stat-icon { font-size: 24px; margin-bottom: 8px; }
-    .stat-value { font-family: 'Rajdhani'; font-size: 42px; font-weight: 700; line-height: 1; }
-    .stat-value.small { font-size: 32px; }
-    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
-    .stat-sub { font-size: 11px; margin-top: 6px; color: var(--muted); }
-    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-    .chart-card-title { font-family: 'Rajdhani'; font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
-    .badge-count { font-size: 11px; color: var(--muted); background: var(--navy3); padding: 2px 8px; border-radius: 10px; }
-    .bar-chart { display: flex; flex-direction: column; gap: 10px; }
-    .bar-row { display: flex; align-items: center; gap: 10px; }
-    .bar-label { font-size: 11px; color: var(--muted); width: 120px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .bar-outer { flex: 1; background: rgba(255,255,255,.06); border-radius: 4px; height: 24px; overflow: hidden; position: relative; }
-    .bar-inner { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 10px; font-weight: 700; color: #fff; transition: width .8s ease; min-width: 30px; }
-    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
-    .table-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-    .table-title { font-family: 'Rajdhani'; font-size: 16px; font-weight: 600; }
-    .search-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 7px; padding: 7px 12px; }
-    .search-box input { background: none; border: none; color: var(--text); font-size: 13px; font-family: 'Inter'; outline: none; width: 200px; }
-    .search-box input::placeholder { color: var(--muted); }
-    table.data { width: 100%; border-collapse: collapse; }
-    .data th { background: var(--navy2); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 12px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; font-weight: 600; text-align: left; }
-    .data td { padding: 12px 14px; border-bottom: 1px solid rgba(30,58,95,.4); font-size: 12px; vertical-align: middle; }
-    .data tr:hover td { background: rgba(21,101,192,.05); }
-    .data tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
-    .badge-green { background: rgba(0,200,83,.15); color: #69F0AE; border: 1px solid rgba(0,200,83,.3); }
-    .badge-yellow { background: rgba(255,214,0,.12); color: var(--yellow); border: 1px solid rgba(255,214,0,.25); }
-    .badge-red { background: rgba(255,23,68,.12); color: #FF6090; border: 1px solid rgba(255,23,68,.25); }
-    .badge-blue { background: rgba(21,101,192,.2); color: #82B1FF; border: 1px solid rgba(21,101,192,.35); }
-    .filters-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-    .filter-group { display: flex; flex-direction: column; gap: 4px; }
-    .filter-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
-    .filter-select, .filter-input { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: 'Inter'; outline: none; min-width: 160px; }
-    .filter-select:focus, .filter-input:focus { border-color: var(--cyan); background: rgba(0,180,216,.05); }
-    .filter-select option { background: var(--navy); color: var(--text); }
-    #toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.5); transform: translateY(80px); opacity: 0; transition: all .35s cubic-bezier(.25,.8,.25,1); max-width: 320px; display: flex; align-items: center; gap: 10px; }
-    #toast.show { transform: translateY(0); opacity: 1; }
-    #toast .t-icon { font-size: 18px; }
-    .loading-overlay { position: fixed; inset: 0; background: rgba(8,15,26,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
-    .loading-overlay.hidden { display: none; }
-    .spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { font-size: 14px; color: var(--muted); letter-spacing: 1px; }
-    .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.03); }
-    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-    .sync-dot.offline { background: var(--red); animation: none; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .kpi-mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-    .kpi-mini { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
-    .kpi-mini-value { font-family: 'Rajdhani'; font-size: 28px; font-weight: 700; }
-    .kpi-mini-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
-    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; position: relative; overflow: hidden; }
-    .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent-color, var(--cyan)); }
-    .metric-icon { font-size: 32px; margin-bottom: 12px; }
-    .metric-value { font-family: 'Rajdhani'; font-size: 48px; font-weight: 700; line-height: 1; }
-    .metric-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
-    .metric-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
-    .section-divider { display: flex; align-items: center; gap: 12px; margin: 32px 0 20px; }
-    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .section-title { font-family: 'Rajdhani'; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; }
-    .time-fast { color: var(--green); } .time-medium { color: var(--yellow); } .time-slow { color: var(--red); }
-    @media(max-width: 1024px) { .chart-row { grid-template-columns: 1fr; } .metric-row { grid-template-columns: 1fr; } .kpi-mini-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media(max-width: 768px) { .sidebar { display: none; } .stats-grid { grid-template-columns: 1fr 1fr; } .kpi-mini-grid { grid-template-columns: 1fr; } }
+
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+    html, body {
+      height:100%; background:var(--bg); color:var(--text);
+      font-family:'Inter',sans-serif; font-size:14px;
+      transition: background .25s, color .25s;
+    }
+
+    /* ─── SCANLINES overlay ─── */
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(0,255,100,.012) 3px, rgba(0,255,100,.012) 4px
+      );
+    }
+
+    /* ═══ TOPBAR ═══ */
+    .topbar {
+      position:sticky; top:0; z-index:200; height:var(--topbar-h);
+      background: linear-gradient(90deg, #060f0c 0%, #0a1a14 50%, #060f0c 100%);
+      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 0 22px 0 18px; gap:14px;
+      box-shadow: 0 2px 20px rgba(0,255,100,.07);
+    }
+
+    .tb-logo { display:flex; align-items:center; gap:12px; }
+    .tb-icon {
+      width:40px; height:40px; border-radius:10px;
+      background: linear-gradient(135deg, #00c853, #00e5cc);
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Rajdhani',sans-serif; font-weight:700;
+      color:#050d0a; font-size:13px; letter-spacing:.5px;
+      box-shadow: 0 0 18px rgba(0,200,83,.5);
+    }
+    .tb-title {
+      font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700;
+      color:var(--g1); letter-spacing:1.5px; line-height:1;
+    }
+    .tb-sub { font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+
+    .tb-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+    .sync-status {
+      display:flex; align-items:center; gap:7px;
+      padding:6px 12px; border-radius:20px;
+      background: rgba(0,255,136,.06); border:1px solid rgba(0,255,136,.15);
+      font-size:11px; color:var(--muted); letter-spacing:.5px;
+    }
+    .sync-dot {
+      width:7px; height:7px; border-radius:50%;
+      background:var(--gray); animation:none;
+    }
+    .sync-dot.live { background:var(--ok); box-shadow:0 0 8px var(--ok); animation: pulse 2s infinite; }
+    .sync-dot.err  { background:var(--crit); box-shadow:0 0 8px var(--crit); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ═══ BUTTONS ═══ */
+    .btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 16px; border-radius:7px;
+      font-size:11px; font-weight:700; letter-spacing:.8px;
+      text-transform:uppercase; cursor:pointer; border:none;
+      transition:all .2s; font-family:'Inter',sans-serif;
+    }
+    .btn-neon {
+      background: linear-gradient(135deg, #00c853, #00e676);
+      color:#050d0a; box-shadow:0 0 14px rgba(0,200,83,.4);
+    }
+    .btn-neon:hover { transform:translateY(-1px); box-shadow:0 0 22px rgba(0,200,83,.6); }
+    .btn-outline {
+      background:transparent; color:var(--g1);
+      border:1px solid rgba(0,255,136,.3);
+    }
+    .btn-outline:hover { background:rgba(0,255,136,.07); }
+    .btn-ghost {
+      background:transparent; color:var(--muted); border:1px solid var(--border);
+    }
+    .btn-ghost:hover { color:var(--text); border-color:var(--muted); }
+    .btn-sm { padding:5px 11px; font-size:10px; }
+    .btn-icon {
+      padding:7px 10px; font-size:15px;
+      background:transparent; color:var(--muted); border:1px solid var(--border);
+    }
+    .btn-icon:hover { color:var(--g1); border-color:var(--g1); }
+
+    /* ═══ LAYOUT ═══ */
+    .layout {
+      display:flex;
+      min-height: calc(100vh - var(--topbar-h));
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      width: var(--sidebar-w); min-width: var(--sidebar-w);
+      background: var(--surface);
+      border-right:1px solid var(--border);
+      display:flex; flex-direction:column; gap:2px;
+      position:sticky; top:var(--topbar-h);
+      height: calc(100vh - var(--topbar-h));
+      overflow-y:auto; padding:14px 0 20px;
+      scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+    }
+
+    .sb-section {
+      font-size:9px; font-weight:700; color:var(--muted2);
+      letter-spacing:2px; text-transform:uppercase;
+      padding:14px 18px 5px;
+    }
+
+    .sb-item {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 18px; cursor:pointer; font-size:12px;
+      color:var(--muted); font-weight:500;
+      border-left:3px solid transparent;
+      transition:all .15s;
+    }
+    .sb-item:hover { background:rgba(0,255,136,.05); color:var(--text); }
+    .sb-item.active {
+      background:rgba(0,255,136,.1); color:var(--g1);
+      border-left-color:var(--g1);
+    }
+    .sb-item .ico { width:16px; text-align:center; font-size:14px; }
+    .sb-badge {
+      margin-left:auto; background:rgba(0,255,136,.15);
+      color:var(--g1); border-radius:10px; padding:1px 7px;
+      font-size:10px; font-weight:700;
+    }
+
+    .sb-divider { margin:8px 18px; border:none; border-top:1px solid var(--border2); }
+
+    .sb-footer {
+      margin-top:auto; padding:12px 18px 0;
+      font-size:10px; color:var(--muted2); letter-spacing:1px; text-align:center;
+    }
+
+    /* ═══ MAIN ═══ */
+    .main { flex:1; padding:22px; overflow-x:auto; }
+
+    .page { display:none; }
+    .page.active { display:block; }
+
+    /* ─── PAGE HEADER ─── */
+    .ph {
+      display:flex; align-items:flex-start; justify-content:space-between;
+      margin-bottom:20px; gap:12px; flex-wrap:wrap;
+    }
+    .ph-title {
+      font-family:'Rajdhani',sans-serif; font-size:24px;
+      font-weight:700; color:var(--text); line-height:1;
+    }
+    .ph-sub { font-size:11px; color:var(--muted); margin-top:4px; letter-spacing:.5px; }
+    .ph-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    /* ─── CONFIG BANNER ─── */
+    .config-banner {
+      background:linear-gradient(90deg,rgba(0,255,136,.08),rgba(0,229,204,.08));
+      border:1px solid rgba(0,255,136,.2); border-radius:var(--radius);
+      padding:14px 18px; margin-bottom:20px;
+      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    }
+    .config-banner .ci { font-size:20px; }
+    .config-banner p { font-size:12px; color:var(--muted); flex:1; min-width:200px; }
+    .config-banner input {
+      flex:2; min-width:280px; background:rgba(0,0,0,.3);
+      border:1px solid var(--border); border-radius:6px;
+      padding:8px 12px; color:var(--text); font-size:12px;
+      font-family:'Inter',sans-serif;
+    }
+    .config-banner input:focus { outline:none; border-color:var(--g1); }
+
+    /* ═══ STATS GRID ═══ */
+    .stats-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(185px,1fr));
+      gap:14px; margin-bottom:20px;
+    }
+
+    .kpi {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:18px 18px 14px;
+      position:relative; overflow:hidden;
+      transition:transform .2s, box-shadow .2s;
+      cursor:default;
+    }
+    .kpi:hover { transform:translateY(-2px); box-shadow:0 6px 24px var(--shadow2); }
+    .kpi::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:var(--kpi-color, var(--g1));
+      box-shadow: 0 0 10px var(--kpi-color, var(--g1));
+    }
+    .kpi::after {
+      content:''; position:absolute; top:0; right:0; width:50px; height:50px;
+      background:radial-gradient(circle at 70% 30%, var(--kpi-color,var(--g1)), transparent 70%);
+      opacity:.08;
+    }
+    .kpi-icon { font-size:22px; margin-bottom:8px; }
+    .kpi-val {
+      font-family:'Rajdhani',sans-serif; font-size:34px;
+      font-weight:700; color:var(--text); line-height:1;
+    }
+    .kpi-val .unit { font-size:16px; font-weight:500; color:var(--muted); margin-left:3px; }
+    .kpi-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:5px; }
+    .kpi-trend { font-size:10px; margin-top:8px; display:flex; align-items:center; gap:5px; }
+    .kpi-bar { height:3px; background:rgba(255,255,255,.07); border-radius:2px; margin-top:10px; overflow:hidden; }
+    .kpi-bar-fill { height:100%; border-radius:2px; background:var(--kpi-color,var(--g1)); transition:width .8s ease; }
+
+    /* ═══ CHARTS ROW ═══ */
+    .charts-row {
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:14px; margin-bottom:20px;
+    }
+    @media(max-width:900px) { .charts-row { grid-template-columns:1fr; } }
+
+    .chart-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:18px;
+    }
+    .chart-title {
+      font-family:'Rajdhani',sans-serif; font-size:14px;
+      font-weight:600; color:var(--text); margin-bottom:14px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .chart-title .dot {
+      width:8px; height:8px; border-radius:50%;
+      background:var(--g1); box-shadow:0 0 6px var(--g1);
+    }
+    .chart-canvas-wrap { position:relative; height:200px; }
+
+    /* ═══ TOP RANKING ═══ */
+    .rank-list { display:flex; flex-direction:column; gap:6px; }
+    .rank-item {
+      display:flex; align-items:center; gap:10px;
+      padding:9px 12px; border-radius:8px;
+      background:var(--card2); border:1px solid var(--border2);
+      transition:background .15s;
+    }
+    .rank-item:hover { background:rgba(0,255,136,.05); }
+    .rank-num {
+      width:22px; height:22px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700; flex-shrink:0;
+    }
+    .rank-info { flex:1; min-width:0; }
+    .rank-name {
+      font-size:12px; font-weight:600; color:var(--text);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .rank-sub { font-size:10px; color:var(--muted); margin-top:1px; }
+    .rank-days {
+      font-family:'Rajdhani',sans-serif; font-size:18px;
+      font-weight:700; flex-shrink:0;
+    }
+    .rank-bar-wrap { flex:1; background:rgba(255,255,255,.06); border-radius:3px; height:5px; }
+    .rank-bar-fill { height:100%; border-radius:3px; }
+
+    /* ═══ TABLE ═══ */
+    .table-wrap {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); overflow:hidden; margin-bottom:20px;
+    }
+    .table-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px; border-bottom:1px solid var(--border);
+      gap:10px; flex-wrap:wrap;
+    }
+    .table-title {
+      font-family:'Rajdhani',sans-serif; font-size:15px;
+      font-weight:600; color:var(--text);
+    }
+    .table-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    .search-box {
+      display:flex; align-items:center; gap:7px;
+      background:rgba(255,255,255,.04); border:1px solid var(--border);
+      border-radius:6px; padding:6px 11px;
+    }
+    .search-box input {
+      background:none; border:none; color:var(--text);
+      font-size:12px; font-family:'Inter',sans-serif; outline:none; width:180px;
+    }
+    .search-box input::placeholder { color:var(--muted); }
+
+    .filter-select {
+      background:var(--card2); border:1px solid var(--border);
+      color:var(--text); font-size:11px; font-family:'Inter',sans-serif;
+      padding:6px 10px; border-radius:6px; cursor:pointer; outline:none;
+    }
+    .filter-select option { background:var(--surface); }
+
+    .tbl-scroll { overflow-x:auto; }
+
+    table.data {
+      width:100%; border-collapse:collapse; min-width:700px;
+    }
+    .data th {
+      background:var(--surface); color:var(--muted);
+      font-size:10px; text-transform:uppercase; letter-spacing:1px;
+      padding:10px 14px; border-bottom:1px solid var(--border);
+      white-space:nowrap; font-weight:600; text-align:left;
+    }
+    .data th.sortable { cursor:pointer; user-select:none; }
+    .data th.sortable:hover { color:var(--g1); }
+    .data td {
+      padding:10px 14px; border-bottom:1px solid var(--border2);
+      font-size:12px; vertical-align:middle;
+    }
+    .data tr:hover td { background:rgba(0,255,136,.03); }
+    .data tr:last-child td { border-bottom:none; }
+
+    /* ═══ BADGES ═══ */
+    .badge {
+      display:inline-flex; align-items:center;
+      padding:3px 9px; border-radius:20px;
+      font-size:10px; font-weight:700; letter-spacing:.5px;
+      text-transform:uppercase; white-space:nowrap;
+    }
+    .badge-ok     { background:rgba(0,230,118,.12); color:#00e676; border:1px solid rgba(0,230,118,.25); }
+    .badge-warn   { background:rgba(255,214,0,.1);  color:#ffd600; border:1px solid rgba(255,214,0,.25); }
+    .badge-crit   { background:rgba(255,23,68,.1);  color:#ff6090; border:1px solid rgba(255,23,68,.25); }
+    .badge-info   { background:rgba(0,176,255,.1);  color:#40c4ff; border:1px solid rgba(0,176,255,.25); }
+    .badge-gray   { background:rgba(96,125,139,.1); color:#90a4ae; border:1px solid rgba(96,125,139,.2); }
+    .badge-neon   { background:rgba(0,255,136,.1);  color:var(--g1); border:1px solid rgba(0,255,136,.3); box-shadow:0 0 8px rgba(0,255,136,.15); }
+
+    /* ═══ INLINE PROGRESS ═══ */
+    .inline-prog {
+      display:flex; align-items:center; gap:8px; min-width:110px;
+    }
+    .inline-prog .track {
+      flex:1; height:5px; background:rgba(255,255,255,.07);
+      border-radius:3px; overflow:hidden;
+    }
+    .inline-prog .fill { height:100%; border-radius:3px; }
+    .inline-prog .pct { font-size:10px; font-weight:700; color:var(--text); min-width:28px; }
+
+    /* ═══ SEMAFORO ═══ */
+    .semaforo {
+      display:inline-flex; align-items:center; gap:5px;
+    }
+    .semaforo span {
+      width:9px; height:9px; border-radius:50%; opacity:.25;
+    }
+    .semaforo.ok    .s-g { opacity:1; box-shadow:0 0 6px var(--ok); }
+    .semaforo.warn  .s-y { opacity:1; box-shadow:0 0 6px var(--warn); }
+    .semaforo.crit  .s-r { opacity:1; box-shadow:0 0 6px var(--crit); }
+    .s-r { background:var(--crit); }
+    .s-y { background:var(--warn); }
+    .s-g { background:var(--ok); }
+
+    /* ═══ TIMELINE / TRAZABILIDAD ═══ */
+    .timeline {
+      padding:8px 0; display:flex; flex-direction:column; gap:0;
+    }
+    .tl-item {
+      display:flex; gap:14px; padding:10px 0;
+      border-bottom:1px solid var(--border2);
+    }
+    .tl-item:last-child { border-bottom:none; }
+    .tl-dot-wrap {
+      display:flex; flex-direction:column; align-items:center; gap:0;
+    }
+    .tl-dot {
+      width:10px; height:10px; border-radius:50%;
+      margin-top:4px; flex-shrink:0; border:2px solid;
+    }
+    .tl-line { width:1px; background:var(--border); flex:1; margin:3px 0; min-height:20px; }
+    .tl-content { flex:1; }
+    .tl-event { font-size:12px; font-weight:600; color:var(--text); }
+    .tl-time  { font-size:10px; color:var(--muted); margin-top:2px; }
+    .tl-actor { font-size:10px; color:var(--g3); margin-top:1px; }
+
+    /* ═══ ALERT STRIP ═══ */
+    .alert-strip {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px; border-radius:8px; margin-bottom:10px;
+      font-size:12px;
+    }
+    .alert-crit { background:rgba(255,23,68,.1); border:1px solid rgba(255,23,68,.25); color:#ff6090; }
+    .alert-warn { background:rgba(255,214,0,.08); border:1px solid rgba(255,214,0,.2); color:#ffd600; }
+    .alert-ok   { background:rgba(0,230,118,.08); border:1px solid rgba(0,230,118,.2); color:#00e676; }
+
+    /* ═══ GRID 2 COLS ═══ */
+    .grid2 {
+      display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;
+    }
+    @media(max-width:800px) { .grid2 { grid-template-columns:1fr; } }
+    .grid3 {
+      display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:20px;
+    }
+    @media(max-width:1000px) { .grid3 { grid-template-columns:1fr 1fr; } }
+    @media(max-width:600px)  { .grid3 { grid-template-columns:1fr; } }
+
+    /* ═══ INFO CARD ═══ */
+    .info-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:18px;
+    }
+    .info-card-title {
+      font-family:'Rajdhani',sans-serif; font-size:14px;
+      font-weight:600; color:var(--text); margin-bottom:14px;
+      display:flex; align-items:center; gap:7px;
+    }
+    .info-card-title .tag {
+      font-size:10px; padding:2px 8px; border-radius:20px;
+      background:rgba(0,255,136,.1); color:var(--g1); font-weight:600;
+    }
+
+    /* ═══ MODAL ═══ */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.75); z-index:900;
+      backdrop-filter:blur(5px);
+      align-items:center; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:var(--card2); border:1px solid var(--border);
+      border-radius:16px; padding:26px;
+      width:90%; max-width:560px; max-height:88vh; overflow-y:auto;
+      animation: fadeUp .22s ease;
+    }
+    @keyframes fadeUp {
+      from { transform:translateY(18px); opacity:0; }
+      to   { transform:translateY(0);    opacity:1; }
+    }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .modal-title { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; color:var(--text); }
+    .modal-close { background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; }
+    .modal-close:hover { color:var(--text); }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .fg-full { grid-column:1/-1; }
+    .form-group { display:flex; flex-direction:column; gap:5px; }
+    .form-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+    .form-input, .form-select, .form-textarea {
+      background:rgba(255,255,255,.04); border:1px solid var(--border);
+      border-radius:6px; padding:9px 12px; color:var(--text);
+      font-size:12px; font-family:'Inter',sans-serif; transition:border .2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline:none; border-color:var(--g1); background:rgba(0,255,136,.04);
+    }
+    .form-select option { background:var(--surface); }
+    .form-textarea { resize:vertical; min-height:65px; }
+    .modal-footer {
+      display:flex; justify-content:flex-end; gap:8px;
+      margin-top:18px; padding-top:14px; border-top:1px solid var(--border);
+    }
+
+    /* ═══ TOAST ═══ */
+    #toast {
+      position:fixed; bottom:22px; right:22px; z-index:9999;
+      background:var(--card2); border:1px solid var(--border);
+      border-radius:10px; padding:12px 18px;
+      font-size:12px; color:var(--text);
+      box-shadow:0 8px 30px var(--shadow2);
+      transform:translateY(80px); opacity:0;
+      transition:all .3s cubic-bezier(.25,.8,.25,1);
+      display:flex; align-items:center; gap:8px; max-width:300px;
+    }
+    #toast.show { transform:translateY(0); opacity:1; }
+
+    /* ═══ EMPTY STATE ═══ */
+    .empty {
+      text-align:center; padding:48px 20px;
+      color:var(--muted); font-size:13px;
+    }
+    .empty-icon { font-size:42px; margin-bottom:12px; opacity:.5; }
+    .empty p { margin-top:6px; font-size:11px; }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media(max-width:768px) {
+      .sidebar { display:none; }
+      .stats-grid { grid-template-columns:1fr 1fr; }
+      .topbar { padding:0 14px; }
+      .tb-right .sync-status { display:none; }
+    }
+
+    /* ═══ SCROLLBAR ═══ */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--muted2); }
+
+    /* ═══ DESIGNER ═══ */
+    .designer {
+      position:fixed; bottom:8px; left:12px;
+      font-size:10px; letter-spacing:2px; color:rgba(0,255,136,.12); z-index:9999;
+    }
+
+    /* ═══ GLOW LINES ═══ */
+    .glow-sep {
+      height:1px; margin:18px 0;
+      background:linear-gradient(90deg, transparent, var(--g4), transparent);
+    }
+
+    /* Donut mini */
+    .donut-row { display:flex; align-items:center; gap:18px; }
+    .donut-legend-v { display:flex; flex-direction:column; gap:7px; flex:1; }
+    .dl-item { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); }
+    .dl-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .dl-val { margin-left:auto; font-weight:700; color:var(--text); }
+
+    /* Config zone */
+    .config-zone {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:20px; margin-bottom:20px;
+    }
+    .config-zone h3 {
+      font-family:'Rajdhani',sans-serif; font-size:15px;
+      font-weight:600; color:var(--text); margin-bottom:12px;
+    }
+    .config-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .config-row label { font-size:11px; color:var(--muted); min-width:90px; }
+    .config-row input, .config-row select {
+      flex:1; min-width:220px; background:rgba(255,255,255,.04);
+      border:1px solid var(--border); border-radius:6px;
+      padding:8px 12px; color:var(--text); font-size:12px; font-family:'Inter',sans-serif;
+    }
+    .config-row input:focus { outline:none; border-color:var(--g1); }
+
+    /* Tab pills */
+    .tabs { display:flex; gap:4px; margin-bottom:18px; flex-wrap:wrap; }
+    .tab-btn {
+      padding:8px 16px; border-radius:6px; font-size:11px;
+      font-weight:600; cursor:pointer; letter-spacing:.5px;
+      background:transparent; border:1px solid var(--border);
+      color:var(--muted); transition:all .15s;
+    }
+    .tab-btn.active {
+      background:rgba(0,255,136,.12); color:var(--g1);
+      border-color:rgba(0,255,136,.3);
+    }
+    .tab-btn:hover:not(.active) { border-color:var(--muted); color:var(--text); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* Timeline mini bar */
+    .tl-bar-row {
+      display:flex; align-items:center; gap:10px; font-size:11px; margin-bottom:6px;
+    }
+    .tl-bar-label { color:var(--muted); min-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tl-bar-track { flex:1; background:rgba(255,255,255,.06); border-radius:3px; height:8px; overflow:hidden; }
+    .tl-bar-fill  { height:100%; border-radius:3px; }
+    .tl-bar-val   { color:var(--text); font-weight:700; min-width:40px; text-align:right; }
+
+    /* Heatmap placeholder */
+    .heatmap-grid {
+      display:grid; grid-template-columns:repeat(12,1fr); gap:3px;
+    }
+    .hm-cell {
+      aspect-ratio:1; border-radius:3px;
+      background:rgba(0,255,136,.07); border:1px solid var(--border2);
+      display:flex; align-items:center; justify-content:center;
+      font-size:8px; color:var(--muted);
+    }
+    .hm-cell.hm-1 { background:rgba(0,200,83,.15); }
+    .hm-cell.hm-2 { background:rgba(0,200,83,.30); }
+    .hm-cell.hm-3 { background:rgba(0,200,83,.55); }
+    .hm-cell.hm-4 { background:rgba(0,200,83,.80); box-shadow:0 0 6px rgba(0,200,83,.4); }
+
+    /* Gauge */
+    .gauge-wrap {
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+    }
+    .gauge-val {
+      font-family:'Rajdhani',sans-serif; font-size:32px;
+      font-weight:700; color:var(--text); line-height:1;
+    }
+    .gauge-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
   </style>
 </head>
 <body>
-  <div class="loading-overlay hidden" id="loading-overlay">
-    <div class="spinner"></div>
-    <div class="loading-text">Sincronizando con Google Sheets...</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOPBAR
+═══════════════════════════════════════════════════════════ -->
+<div class="topbar">
+  <div class="tb-logo">
+    <div class="tb-icon">DC1</div>
+    <div>
+      <div class="tb-title">CONTROL DE REMISIONES DC1</div>
+      <div class="tb-sub">Olímpica S.A. · Dirección de Ingeniería y Mantenimiento</div>
+    </div>
+  </div>
+  <div class="tb-right">
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Sin configurar</span>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="syncData()">⟳ Sincronizar</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
+    <button class="btn btn-icon" onclick="toggleTheme()" id="theme-btn" title="Modo claro/oscuro">🌙</button>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- ══════════════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sb-section">Principal</div>
+  <div class="sb-item active" data-page="dashboard" onclick="nav('dashboard')">
+    <span class="ico">▦</span> Dashboard General
+  </div>
+  <div class="sb-item" data-page="tiempos" onclick="nav('tiempos')">
+    <span class="ico">⏱</span> Control del Tiempo
   </div>
 
-  <div class="topbar">
-    <div class="logo">
-      <div class="logo-icon">DC1</div>
+  <div class="sb-section">Análisis</div>
+  <div class="sb-item" data-page="coordinadores" onclick="nav('coordinadores')">
+    <span class="ico">👤</span> Coordinadores
+    <span class="sb-badge" id="sb-coord-count">0</span>
+  </div>
+  <div class="sb-item" data-page="contratistas" onclick="nav('contratistas')">
+    <span class="ico">🔧</span> Contratistas
+    <span class="sb-badge" id="sb-cont-count">0</span>
+  </div>
+  <div class="sb-item" data-page="alertas" onclick="nav('alertas')">
+    <span class="ico">🚨</span> Alertas
+    <span class="sb-badge" id="sb-alerts-count" style="background:rgba(255,23,68,.2);color:#ff6090;">0</span>
+  </div>
+
+  <hr class="sb-divider"/>
+  <div class="sb-section">Configuración</div>
+  <div class="sb-item" data-page="config" onclick="nav('config')">
+    <span class="ico">⚙</span> Config. Sheets
+  </div>
+
+  <div class="sb-footer">•Designed by ADGE•</div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════════ -->
+<main class="main">
+
+<!-- ─────────────────── DASHBOARD GENERAL ─────────────────── -->
+<div class="page active" id="page-dashboard">
+  <div class="ph">
+    <div>
+      <div class="ph-title">Dashboard General</div>
+      <div class="ph-sub" id="dash-last-sync">Última sincronización: —</div>
+    </div>
+    <div class="ph-actions">
+      <button class="btn btn-neon btn-sm" onclick="syncData()">⟳ Actualizar</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="stats-grid" id="kpi-grid">
+    <!-- generado por JS -->
+  </div>
+
+  <!-- Alertas rápidas -->
+  <div id="alert-strip-zone"></div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot"></span>Tiempo Promedio por Etapa (días)</div>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-etapas"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot" style="background:var(--cyan)"></span>Estado de Remisiones</div>
+      <div class="donut-row">
+        <canvas id="chart-donut" width="130" height="130" style="flex-shrink:0"></canvas>
+        <div class="donut-legend-v" id="donut-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 10 contratistas demorados -->
+  <div class="grid2">
+    <div class="info-card">
+      <div class="info-card-title">🏗️ Top 10 — Contratistas con Mayor Demora
+        <span class="tag">Radicación</span>
+      </div>
+      <div class="rank-list" id="top-contratistas"></div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">👤 Top 10 — Coordinadores más Lentos
+        <span class="tag">Creación OC</span>
+      </div>
+      <div class="rank-list" id="top-coordinadores"></div>
+    </div>
+  </div>
+
+  <!-- Tendencia mensual -->
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="chart-title"><span class="dot" style="background:var(--lime)"></span>Tendencia de Tiempos — Últimos 6 meses</div>
+    <div class="chart-canvas-wrap" style="height:180px">
+      <canvas id="chart-trend"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────── CONTROL DEL TIEMPO ─────────────────── -->
+<div class="page" id="page-tiempos">
+  <div class="ph">
+    <div>
+      <div class="ph-title">Control del Tiempo</div>
+      <div class="ph-sub">Trazabilidad · Métricas · Rankings · Historial Administrativo</div>
+    </div>
+    <div class="ph-actions">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ Exportar</button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="info-card" style="margin-bottom:16px;">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="min-width:160px;">
+        <div class="form-label">Coordinador</div>
+        <select class="filter-select" id="f-coord" onchange="applyFilters()" style="width:100%">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="form-group" style="min-width:160px;">
+        <div class="form-label">Contratista</div>
+        <select class="filter-select" id="f-cont" onchange="applyFilters()" style="width:100%">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="form-group" style="min-width:140px;">
+        <div class="form-label">Estado</div>
+        <select class="filter-select" id="f-estado" onchange="applyFilters()" style="width:100%">
+          <option value="">Todos</option>
+          <option value="ok">En Tiempo</option>
+          <option value="warn">Demorado</option>
+          <option value="crit">Crítico</option>
+        </select>
+      </div>
+      <div class="form-group" style="min-width:140px;">
+        <div class="form-label">Ordenar por</div>
+        <select class="filter-select" id="f-sort" onchange="applyFilters()" style="width:100%">
+          <option value="fecha_desc">Fecha ↓</option>
+          <option value="fecha_asc">Fecha ↑</option>
+          <option value="demora_desc">Mayor Demora</option>
+          <option value="demora_asc">Menor Demora</option>
+        </select>
+      </div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="f-search" placeholder="Buscar remisión, contratista..." oninput="applyFilters()"/>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Limpiar</button>
+    </div>
+  </div>
+
+  <!-- KPIs de tiempo -->
+  <div class="stats-grid" id="time-kpis" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));"></div>
+
+  <!-- Tabs: Tabla / Trazabilidad / Ranking -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-tabla','tiempos')">📋 Tabla Detallada</button>
+    <button class="tab-btn" onclick="switchTab('tab-traza','tiempos')">🔗 Trazabilidad</button>
+    <button class="tab-btn" onclick="switchTab('tab-rank','tiempos')">🏆 Rankings</button>
+    <button class="tab-btn" onclick="switchTab('tab-heatmap','tiempos')">🗓️ Historial</button>
+  </div>
+
+  <!-- Tab: Tabla -->
+  <div class="tab-content active" id="tab-tabla">
+    <div class="table-wrap">
+      <div class="table-header">
+        <span class="table-title">Remisiones — Detalle Completo</span>
+        <span id="table-count" style="font-size:11px;color:var(--muted);"></span>
+      </div>
+      <div class="tbl-scroll">
+        <table class="data" id="main-table">
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortTable('num')"># Rem.</th>
+              <th class="sortable" onclick="sortTable('coordinador')">Coordinador</th>
+              <th class="sortable" onclick="sortTable('contratista')">Contratista</th>
+              <th>Tienda / PDV</th>
+              <th class="sortable" onclick="sortTable('fecha_oc')">Fecha OC</th>
+              <th class="sortable" onclick="sortTable('dias_creacion')">Días Creación OC</th>
+              <th class="sortable" onclick="sortTable('fecha_rad')">Fecha Radicación</th>
+              <th class="sortable" onclick="sortTable('dias_rad')">Días Radicación</th>
+              <th>Semáforo</th>
+            </tr>
+          </thead>
+          <tbody id="main-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Trazabilidad -->
+  <div class="tab-content" id="tab-traza">
+    <div class="info-card">
+      <div class="info-card-title">🔗 Trazabilidad por Remisión</div>
+      <div class="search-box" style="margin-bottom:14px;width:fit-content;">
+        <span>🔍</span>
+        <input type="text" id="traza-search" placeholder="Número de remisión..." oninput="renderTrazabilidad()"/>
+      </div>
+      <div id="traza-container"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Rankings -->
+  <div class="tab-content" id="tab-rank">
+    <div class="grid2">
+      <div class="info-card">
+        <div class="info-card-title">⏱ Ranking — Tiempo de Creación OC <span class="tag">Coordinadores</span></div>
+        <div id="rank-coord-detail"></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">📄 Ranking — Tiempo de Radicación <span class="tag">Contratistas</span></div>
+        <div id="rank-cont-detail"></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="dot"></span>Comparativa de Tiempos por Contratista</div>
+      <div class="chart-canvas-wrap" style="height:220px;">
+        <canvas id="chart-rank-bar"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Historial -->
+  <div class="tab-content" id="tab-heatmap">
+    <div class="info-card">
+      <div class="info-card-title">📅 Historial de Actividad Mensual</div>
+      <div id="heatmap-zone"></div>
+    </div>
+    <div class="chart-card" style="margin-top:14px;">
+      <div class="chart-title"><span class="dot" style="background:var(--cyan)"></span>Tiempo Acumulado por Etapa</div>
+      <div id="acum-etapas"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────── COORDINADORES ─────────────────── -->
+<div class="page" id="page-coordinadores">
+  <div class="ph">
+    <div><div class="ph-title">Coordinadores</div>
+    <div class="ph-sub">Desempeño y tiempos de gestión por coordinador</div></div>
+  </div>
+  <div id="coord-cards" class="grid3"></div>
+</div>
+
+<!-- ─────────────────── CONTRATISTAS ─────────────────── -->
+<div class="page" id="page-contratistas">
+  <div class="ph">
+    <div><div class="ph-title">Contratistas</div>
+    <div class="ph-sub">Seguimiento de radicación y cumplimiento por contratista</div></div>
+  </div>
+  <div id="cont-cards" class="grid3"></div>
+</div>
+
+<!-- ─────────────────── ALERTAS ─────────────────── -->
+<div class="page" id="page-alertas">
+  <div class="ph">
+    <div><div class="ph-title">Centro de Alertas</div>
+    <div class="ph-sub">Remisiones con demoras críticas y advertencias</div></div>
+  </div>
+  <div id="alertas-zone"></div>
+</div>
+
+<!-- ─────────────────── CONFIGURACIÓN ─────────────────── -->
+<div class="page" id="page-config">
+  <div class="ph">
+    <div><div class="ph-title">Configuración</div>
+    <div class="ph-sub">Integración con Google Sheets vía Apps Script Web App</div></div>
+  </div>
+
+  <div class="config-zone">
+    <h3>🔗 URL del Web App (Google Apps Script)</h3>
+    <div class="config-row" style="margin-bottom:12px;">
+      <label>Web App URL</label>
+      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/XXXXXX/exec"/>
+    </div>
+    <div class="config-row" style="margin-bottom:12px;">
+      <label>Rango de Datos</label>
+      <input type="text" id="cfg-range" placeholder="Hoja1!A:Z (opcional, si el script lo soporta)"/>
+    </div>
+    <div class="config-row" style="margin-bottom:12px;">
+      <label>Auto-sync (seg)</label>
+      <input type="number" id="cfg-interval" placeholder="0 = manual" min="0" style="max-width:150px;"/>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="btn btn-neon btn-sm" onclick="saveConfig()">💾 Guardar Config</button>
+      <button class="btn btn-outline btn-sm" onclick="syncData()">⟳ Probar Conexión</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadDemo()">📊 Cargar Demo</button>
+    </div>
+  </div>
+
+  <div class="config-zone">
+    <h3>📋 Estructura esperada del Google Sheets</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+      El Apps Script debe retornar un JSON con un array de objetos. Columnas esperadas:
+    </p>
+    <div class="grid2">
       <div>
-        <div class="logo-text">CONTROL DE REMISIONES</div>
-        <div class="logo-sub">Suite de Control de Tiempos</div>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <div class="sync-status" id="sync-status">
-        <span class="sync-dot" id="sync-dot"></span>
-        <span id="sync-text">Sincronizado</span>
-      </div>
-      <button class="btn btn-outline btn-sm" onclick="toggleTheme()" id="theme-toggle" style="padding:8px 10px;font-size:16px">🌙</button>
-      <button class="btn btn-outline btn-sm" onclick="syncWithGoogleSheets()">🔄 Sincronizar</button>
-      <button class="btn btn-primary" onclick="exportData()">↓ Exportar Datos</button>
-    </div>
-  </div>
-
-  <div class="layout">
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-label">Navegacion</div>
-      <div class="sidebar-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="icon">▦</span> Dashboard General</div>
-      <div class="sidebar-item" onclick="showPage('control-tiempo')" id="nav-control-tiempo"><span class="icon">⏱</span> Control del Tiempo<span class="sidebar-badge" id="rem-count-badge">0</span></div>
-      <div class="sidebar-item" onclick="showPage('coordinadores')" id="nav-coordinadores"><span class="icon">👤</span> Coordinadores</div>
-      <div class="sidebar-item" onclick="showPage('contratistas')" id="nav-contratistas"><span class="icon">🏗</span> Contratistas</div>
-      <div class="sidebar-item" onclick="showPage('analisis')" id="nav-analisis"><span class="icon">📊</span> Analisis Detallado</div>
-      <div class="sidebar-label" style="margin-top:12px">Resumen Rapido</div>
-      <div class="sidebar-item" style="cursor:default"><span class="icon">📋</span> Total Remisiones<span class="sidebar-badge" id="total-rem-badge">0</span></div>
-      <div class="sidebar-item" style="cursor:default"><span class="icon">⏳</span> Prom. Coordinadores<span class="sidebar-badge" id="prom-coord-badge" style="background:var(--cyan)">--</span></div>
-      <div class="sidebar-item" style="cursor:default"><span class="icon">🕐</span> Prom. Contratistas<span class="sidebar-badge" id="prom-cont-badge" style="background:var(--orange)">--</span></div>
-    </div>
-
-    <div class="main">
-      <!-- DASHBOARD -->
-      <div class="page active" id="page-dashboard">
-        <div class="page-header"><div><div class="page-title">Dashboard General</div><div class="page-sub">Metricas de tiempos de remisiones y radicacion</div></div></div>
-        <div class="kpi-mini-grid">
-          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-total-rem">--</div><div class="kpi-mini-label">Total Remisiones</div></div>
-          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-prom-coord">--</div><div class="kpi-mini-label">Prom. Coordinadores (hrs)</div></div>
-          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-prom-cont">--</div><div class="kpi-mini-label">Prom. Contratistas (hrs)</div></div>
-          <div class="kpi-mini"><div class="kpi-mini-value" id="kpi-diferencia">--</div><div class="kpi-mini-label">Diferencia Promedio</div></div>
-        </div>
-        <div class="metric-row">
-          <div class="metric-card" style="--accent-color:var(--cyan)"><div class="metric-icon">⏱</div><div class="metric-value" id="metric-coord">--</div><div class="metric-label">Tiempo Promedio Coordinadores</div><div class="metric-sub" id="metric-coord-sub">Tiempo desde creacion hasta asignacion</div></div>
-          <div class="metric-card" style="--accent-color:var(--orange)"><div class="metric-icon">🕐</div><div class="metric-value" id="metric-cont">--</div><div class="metric-label">Tiempo Promedio Contratistas</div><div class="metric-sub" id="metric-cont-sub">Tiempo desde asignacion hasta radicacion</div></div>
-          <div class="metric-card" style="--accent-color:var(--purple)"><div class="metric-icon">📈</div><div class="metric-value" id="metric-eficiencia">--</div><div class="metric-label">Eficiencia General</div><div class="metric-sub" id="metric-eficiencia-sub">Coordinadores vs Contratistas</div></div>
-        </div>
-        <div class="chart-row">
-          <div class="chart-card" style="grid-column:1/-1">
-            <div class="chart-card-title"><span>🏆 Top 10 Contratistas que Mas Demoran</span><span class="badge-count">Basado en tiempo de radicacion</span></div>
-            <div class="bar-chart" id="top10-chart"></div>
-          </div>
-        </div>
-        <div class="chart-row">
-          <div class="chart-card"><div class="chart-card-title"><span>👤 Tiempos por Coordinador</span><span class="badge-count">Creacion de ordenes</span></div><div class="bar-chart" id="coord-chart"></div></div>
-          <div class="chart-card"><div class="chart-card-title"><span>🏗 Tiempos por Contratista</span><span class="badge-count">Radicacion</span></div><div class="bar-chart" id="cont-chart"></div></div>
+        <p style="font-size:11px;color:var(--g1);font-weight:700;margin-bottom:8px;letter-spacing:1px;">COLUMNAS REQUERIDAS</p>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--muted);">
+          <span>• <b style="color:var(--text)">Col A</b> — N° Remisión</span>
+          <span>• <b style="color:var(--text)">Col B</b> — Coordinador (quién crea la OC)</span>
+          <span>• <b style="color:var(--text)">Col C</b> — Contratista</span>
+          <span>• <b style="color:var(--text)">Col D</b> — Tienda / PDV</span>
+          <span>• <b style="color:var(--text)">Col E</b> — Días creación OC (coord.)</span>
+          <span>• <b style="color:var(--text)">Col F</b> — Fecha de creación OC</span>
+          <span>• <b style="color:var(--text)">Col G</b> — Días radicación (contratista)</span>
+          <span>• <b style="color:var(--text)">Col H</b> — Fecha radicación</span>
+          <span>• <b style="color:var(--text)">Col I</b> — Estado</span>
+          <span>• <b style="color:var(--text)">Col J</b> — Observaciones</span>
         </div>
       </div>
-
-      <!-- CONTROL DEL TIEMPO -->
-      <div class="page" id="page-control-tiempo">
-        <div class="page-header"><div><div class="page-title">Control del Tiempo</div><div class="page-sub">Suite de seguimiento de remisiones y tiempos de respuesta</div></div></div>
-        <div class="filters-row">
-          <div class="filter-group"><label class="filter-label">Coordinador</label><select class="filter-select" id="filter-coord" onchange="renderControlTiempo()"><option value="">Todos</option></select></div>
-          <div class="filter-group"><label class="filter-label">Contratista</label><select class="filter-select" id="filter-cont" onchange="renderControlTiempo()"><option value="">Todos</option></select></div>
-          <div class="filter-group"><label class="filter-label">Estado</label><select class="filter-select" id="filter-estado" onchange="renderControlTiempo()"><option value="">Todos</option><option>Pendiente</option><option>En Proceso</option><option>Radicado</option><option>Aprobado</option><option>Rechazado</option></select></div>
-          <div class="filter-group"><label class="filter-label">Desde</label><input type="date" class="filter-input" id="filter-desde" onchange="renderControlTiempo()"></div>
-          <div class="filter-group"><label class="filter-label">Hasta</label><input type="date" class="filter-input" id="filter-hasta" onchange="renderControlTiempo()"></div>
-          <div class="filter-group" style="margin-top:auto"><button class="btn btn-outline btn-sm" onclick="clearFilters()">Limpiar Filtros</button></div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card" style="--accent-color:var(--cyan)"><div class="stat-icon">📋</div><div class="stat-value" id="ctrl-total">--</div><div class="stat-label">Remisiones Filtradas</div></div>
-          <div class="stat-card" style="--accent-color:var(--green)"><div class="stat-icon">✓</div><div class="stat-value" id="ctrl-radicadas">--</div><div class="stat-label">Radicadas</div></div>
-          <div class="stat-card" style="--accent-color:var(--yellow)"><div class="stat-icon">⏳</div><div class="stat-value" id="ctrl-pendientes">--</div><div class="stat-label">Pendientes</div></div>
-          <div class="stat-card" style="--accent-color:var(--red)"><div class="stat-icon">⚠</div><div class="stat-value" id="ctrl-demoradas">--</div><div class="stat-label">Demoradas (>24h)</div></div>
-        </div>
-        <div class="table-wrap">
-          <div class="table-top"><span class="table-title">📋 Registro de Remisiones</span><div class="search-box"><input type="text" id="search-remisiones" placeholder="Buscar remision..." oninput="renderControlTiempo()"></div></div>
-          <table class="data">
-            <thead><tr><th>#</th><th>Remision</th><th>Coordinador</th><th>T. Creacion (E)</th><th>Contratista</th><th>T. Radicacion (G)</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Observaciones</th></tr></thead>
-            <tbody id="control-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- COORDINADORES -->
-      <div class="page" id="page-coordinadores">
-        <div class="page-header"><div><div class="page-title">Coordinadores</div><div class="page-sub">Analisis de tiempos de creacion de ordenes por coordinador</div></div></div>
-        <div class="chart-card" style="margin-bottom:24px"><div class="chart-card-title"><span>📊 Ranking de Coordinadores por Tiempo de Respuesta</span></div><div class="bar-chart" id="coord-ranking-chart"></div></div>
-        <div class="table-wrap">
-          <div class="table-top"><span class="table-title">👤 Detalle por Coordinador</span></div>
-          <table class="data">
-            <thead><tr><th>Coordinador</th><th>Remisiones</th><th>Tiempo Promedio (hrs)</th><th>Minimo</th><th>Maximo</th><th>Eficiencia</th></tr></thead>
-            <tbody id="coord-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- CONTRATISTAS -->
-      <div class="page" id="page-contratistas">
-        <div class="page-header"><div><div class="page-title">Contratistas</div><div class="page-sub">Analisis de tiempos de radicacion por contratista</div></div></div>
-        <div class="chart-card" style="margin-bottom:24px"><div class="chart-card-title"><span>🏗 Ranking de Contratistas por Tiempo de Radicacion</span></div><div class="bar-chart" id="cont-ranking-chart"></div></div>
-        <div class="table-wrap">
-          <div class="table-top"><span class="table-title">🏗 Detalle por Contratista</span></div>
-          <table class="data">
-            <thead><tr><th>Contratista</th><th>Remisiones</th><th>Tiempo Promedio (hrs)</th><th>Minimo</th><th>Maximo</th><th>Estado</th></tr></thead>
-            <tbody id="cont-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ANALISIS -->
-      <div class="page" id="page-analisis">
-        <div class="page-header"><div><div class="page-title">Analisis Detallado</div><div class="page-sub">Metricas avanzadas y tendencias de tiempos</div></div></div>
-        <div class="section-divider"><span class="section-title">Distribucion de Tiempos</span></div>
-        <div class="chart-row">
-          <div class="chart-card"><div class="chart-card-title">⏱ Distribucion Tiempos Coordinadores</div><div id="dist-coord" style="padding:20px 0"></div></div>
-          <div class="chart-card"><div class="chart-card-title">🕐 Distribucion Tiempos Contratistas</div><div id="dist-cont" style="padding:20px 0"></div></div>
-        </div>
-        <div class="section-divider"><span class="section-title">Tendencias y Alertas</span></div>
-        <div class="stats-grid">
-          <div class="stat-card" style="--accent-color:var(--red)"><div class="stat-icon">🚨</div><div class="stat-value small" id="alertas-criticas">--</div><div class="stat-label">Alertas Criticas</div><div class="stat-sub">Remisiones >48h sin radicar</div></div>
-          <div class="stat-card" style="--accent-color:var(--yellow)"><div class="stat-icon">⚡</div><div class="stat-value small" id="alertas-media">--</div><div class="stat-label">Alertas Medias</div><div class="stat-sub">Remisiones >24h sin radicar</div></div>
-          <div class="stat-card" style="--accent-color:var(--green)"><div class="stat-icon">🎯</div><div class="stat-value small" id="meta-cumplida">--</div><div class="stat-label">Meta Cumplida</div><div class="stat-sub">Radicadas en <12h</div></div>
-          <div class="stat-card" style="--accent-color:var(--purple)"><div class="stat-icon">📊</div><div class="stat-value small" id="prom-semana">--</div><div class="stat-label">Promedio Semanal</div><div class="stat-sub">Ultimos 7 dias</div></div>
-        </div>
+      <div>
+        <p style="font-size:11px;color:var(--cyan);font-weight:700;margin-bottom:8px;letter-spacing:1px;">APPS SCRIPT BÁSICO</p>
+        <pre style="font-size:10px;color:var(--muted);background:var(--bg);padding:12px;border-radius:8px;overflow:auto;line-height:1.6;">function doGet() {
+  const ss = SpreadsheetApp
+    .getActiveSpreadsheet();
+  const sh = ss.getActiveSheet();
+  const rows = sh.getDataRange()
+    .getValues();
+  const [header, ...data] = rows;
+  const result = data.map(r => {
+    let obj = {};
+    header.forEach((h,i) => {
+      obj[h] = r[i];
+    });
+    return obj;
+  });
+  return ContentService
+    .createTextOutput(
+      JSON.stringify(result))
+    .setMimeType(
+      ContentService.MimeType.JSON);
+}</pre>
       </div>
     </div>
   </div>
+</div>
 
-  <div id="toast"><span class="t-icon" id="t-icon">✓</span><span id="t-msg"></span></div>
+</main><!-- end main -->
+</div><!-- end layout -->
 
-  <script>
-    const CONFIG_SYNC_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI';
-    const STORE_KEY = 'dc1_remisiones_data';
-    let DB = { remisiones: [] };
+<!-- TOAST -->
+<div id="toast"><span id="t-icon"></span><span id="t-msg"></span></div>
 
-    function loadDB() {
-      try {
-        const raw = localStorage.getItem(STORE_KEY);
-        if (raw) { DB = JSON.parse(raw); }
-        if (!DB.remisiones || DB.remisiones.length === 0) {
-          DB.remisiones = generateSampleData();
-          saveDB();
-        }
-      } catch (e) { DB.remisiones = generateSampleData(); }
+<!-- DESIGNER BADGE -->
+<div class="designer">•Designed by ADGE•</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+let DATA = [];          // raw rows from sheets
+let filtered = [];      // filtered view
+let syncInterval = null;
+let sortState = { col: null, dir: 1 };
+
+const STORE = 'dc1_v1';
+const CFG   = 'dc1_cfg';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwFKRcRGWceMnuVjWNKocLGLsIuqGUwGqtEfZa7Eulx3weUGzG0I5vh7iSMft-_Y2P_/exec';
+
+let cfg = {
+  url: DEFAULT_URL,
+  range: '',
+  interval: 0
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════════════════ */
+function saveConfig() {
+  cfg.url      = document.getElementById('cfg-url').value.trim();
+  cfg.range    = document.getElementById('cfg-range').value.trim();
+  cfg.interval = parseInt(document.getElementById('cfg-interval').value) || 0;
+  localStorage.setItem(CFG, JSON.stringify(cfg));
+  setupAutoSync();
+  toast('Configuración guardada ✓');
+  if (cfg.url) syncData();
+}
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem(CFG);
+    if (raw) {
+      cfg = { ...cfg, ...JSON.parse(raw) };
     }
+  } catch(e){}
+  if (!cfg.url) {
+    cfg.url = DEFAULT_URL;
+  }
+  const cfgUrl = document.getElementById('cfg-url');
+  if (cfgUrl) cfgUrl.value = cfg.url;
+  const cfgRange = document.getElementById('cfg-range');
+  if (cfgRange) cfgRange.value = cfg.range || '';
+  const cfgInterval = document.getElementById('cfg-interval');
+  if (cfgInterval) cfgInterval.value = cfg.interval || '';
+}
 
-    function saveDB() {
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {}
-    }
+function setupAutoSync() {
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+  if (cfg.interval > 0) {
+    syncInterval = setInterval(syncData, cfg.interval * 1000);
+  }
+}
 
-    function generateSampleData() {
-      const coordinadores = ['Ana Martinez', 'Carlos Lopez', 'Diana Ruiz', 'Eduardo Soto', 'Fernanda Vega'];
-      const contratistas = ['Constructora Norte', 'Servicios Electricos SA', 'HVAC Solutions', 'Refrigeracion Industrial', 'Mantenimiento Plus', 'Obras Civiles del Valle', 'Instalaciones Tecnicas', 'Proyectos Integrales'];
-      const estados = ['Pendiente', 'En Proceso', 'Radicado', 'Aprobado', 'Rechazado'];
-      const data = [];
-      for (let i = 1; i <= 150; i++) {
-        const coord = coordinadores[Math.floor(Math.random() * coordinadores.length)];
-        const cont = contratistas[Math.floor(Math.random() * contratistas.length)];
-        const estado = estados[Math.floor(Math.random() * estados.length)];
-        let tiempoCoord = Math.random() * 12 + 2;
-        let tiempoCont = Math.random() * 48 + 4;
-        if (cont === 'Constructora Norte') tiempoCont += 20;
-        if (cont === 'Servicios Electricos SA') tiempoCont += 15;
-        if (cont === 'HVAC Solutions') tiempoCont += 10;
-        if (coord === 'Ana Martinez') tiempoCoord *= 0.7;
-        if (coord === 'Carlos Lopez') tiempoCoord *= 0.8;
-        const fecha = new Date(2026, 4, Math.floor(Math.random() * 30) + 1);
-        data.push({
-          id: 'REM-' + String(i).padStart(4, '0'),
-          fecha: fecha.toISOString().split('T')[0],
-          coordinador: coord,
-          contratista: cont,
-          tiempoCoordinador: Math.round(tiempoCoord * 10) / 10,
-          tiempoContratista: Math.round(tiempoCont * 10) / 10,
-          tiempoTotal: Math.round((tiempoCoord + tiempoCont) * 10) / 10,
-          estado: estado,
-          observaciones: estado === 'Rechazado' ? 'Documentacion incompleta' : (estado === 'Pendiente' ? 'En espera de asignacion' : '')
-        });
-      }
-      return data;
-    }
+/* ═══════════════════════════════════════════════════════════════
+   SYNC / DATA
+═══════════════════════════════════════════════════════════════ */
+async function syncData() {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
 
-    function toggleTheme() {
-      const body = document.body;
-      const btn = document.getElementById('theme-toggle');
-      const isLight = body.classList.toggle('light-mode');
-      btn.textContent = isLight ? '☀️' : '🌙';
-      localStorage.setItem('dc1_theme', isLight ? 'light' : 'dark');
-      toast('Modo ' + (isLight ? 'Claro' : 'Oscuro') + ' activado');
-    }
+  if (!cfg.url) {
+    toast('URL no configurada — carga el demo o configura Sheets', 'warn');
+    return;
+  }
 
-    function loadTheme() {
-      const theme = localStorage.getItem('dc1_theme');
-      if (theme === 'light') {
-        document.body.classList.add('light-mode');
-        document.getElementById('theme-toggle').textContent = '☀️';
-      }
-    }
+  dot.className = 'sync-dot';
+  lbl.textContent = 'Sincronizando...';
+  toast('Sincronizando con Google Sheets...', 'info');
 
-    async function syncWithGoogleSheets() {
-      const url = CONFIG_SYNC_URL;
-      if (!url || url === 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
-        toast('Configura la URL de Google Apps Script en el codigo', 'error');
-        return;
-      }
-      showLoading('Sincronizando con Google Sheets...');
-      try {
-        const res = await fetch(url + '?action=getData');
-        const data = await res.json();
-        if (data.remisiones && Array.isArray(data.remisiones)) {
-          DB.remisiones = data.remisiones.map(r => ({
-            id: r.id || r.ID_REMISION || '',
-            fecha: r.fecha || r.FECHA || '',
-            coordinador: r.coordinador || r.COORDINADOR || '',
-            contratista: r.contratista || r.CONTRATISTA || '',
-            tiempoCoordinador: parseFloat(r.tiempoCoordinador || r.TIEMPO_COORDINADOR || 0),
-            tiempoContratista: parseFloat(r.tiempoContratista || r.TIEMPO_CONTRATISTA || 0),
-            tiempoTotal: parseFloat(r.tiempoTotal || r.TIEMPO_TOTAL || 0),
-            estado: r.estado || r.ESTADO || 'Pendiente',
-            observaciones: r.observaciones || r.OBSERVACIONES || ''
-          }));
-          saveDB();
-          renderAll();
-          updateSyncStatus(true);
-          toast('Sincronizacion exitosa: ' + DB.remisiones.length + ' remisiones cargadas ✓');
-        }
-      } catch (err) {
-        updateSyncStatus(false);
-        toast('Error de sincronizacion: ' + err.message, 'error');
-      } finally {
-        hideLoading();
-      }
-    }
+  try {
+    let url = cfg.url;
+    if (cfg.range) url += (url.includes('?') ? '&' : '?') + 'range=' + encodeURIComponent(cfg.range);
 
-    function updateSyncStatus(online) {
-      const dot = document.getElementById('sync-dot');
-      const text = document.getElementById('sync-text');
-      if (online) { dot.classList.remove('offline'); text.textContent = 'Sincronizado'; }
-      else { dot.classList.add('offline'); text.textContent = 'Sin conexion'; }
-    }
+    const res  = await fetch(url);
+    const raw  = await res.json();
 
-    function showLoading(text) {
-      const overlay = document.getElementById('loading-overlay');
-      overlay.querySelector('.loading-text').textContent = text;
-      overlay.classList.remove('hidden');
-    }
-
-    function hideLoading() {
-      document.getElementById('loading-overlay').classList.add('hidden');
-    }
-
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-      document.getElementById('page-' + pageId).classList.add('active');
-      const navEl = document.getElementById('nav-' + pageId);
-      if (navEl) navEl.classList.add('active');
-      if (pageId === 'dashboard') renderDashboard();
-      if (pageId === 'control-tiempo') renderControlTiempo();
-      if (pageId === 'coordinadores') renderCoordinadores();
-      if (pageId === 'contratistas') renderContratistas();
-      if (pageId === 'analisis') renderAnalisis();
-    }
-
-    function calcularPromedioCoordinadores() {
-      if (!DB.remisiones.length) return 0;
-      const sum = DB.remisiones.reduce((acc, r) => acc + (r.tiempoCoordinador || 0), 0);
-      return Math.round((sum / DB.remisiones.length) * 10) / 10;
-    }
-
-    function calcularPromedioContratistas() {
-      if (!DB.remisiones.length) return 0;
-      const sum = DB.remisiones.reduce((acc, r) => acc + (r.tiempoContratista || 0), 0);
-      return Math.round((sum / DB.remisiones.length) * 10) / 10;
-    }
-
-    function getTop10ContratistasLentos() {
-      const grouped = {};
-      DB.remisiones.forEach(r => {
-        if (!grouped[r.contratista]) grouped[r.contratista] = { sum: 0, count: 0 };
-        grouped[r.contratista].sum += r.tiempoContratista || 0;
-        grouped[r.contratista].count++;
-      });
-      return Object.entries(grouped)
-        .map(([name, data]) => ({ name, promedio: Math.round((data.sum / data.count) * 10) / 10, count: data.count }))
-        .sort((a, b) => b.promedio - a.promedio)
-        .slice(0, 10);
-    }
-
-    function getCoordinadoresStats() {
-      const grouped = {};
-      DB.remisiones.forEach(r => {
-        if (!grouped[r.coordinador]) grouped[r.coordinador] = { sum: 0, count: 0, min: Infinity, max: 0 };
-        const t = r.tiempoCoordinador || 0;
-        grouped[r.coordinador].sum += t;
-        grouped[r.coordinador].count++;
-        grouped[r.coordinador].min = Math.min(grouped[r.coordinador].min, t);
-        grouped[r.coordinador].max = Math.max(grouped[r.coordinador].max, t);
-      });
-      return Object.entries(grouped)
-        .map(([name, data]) => ({ name, promedio: Math.round((data.sum / data.count) * 10) / 10, count: data.count, min: data.min === Infinity ? 0 : data.min, max: data.max }))
-        .sort((a, b) => a.promedio - b.promedio);
-    }
-
-    function getContratistasStats() {
-      const grouped = {};
-      DB.remisiones.forEach(r => {
-        if (!grouped[r.contratista]) grouped[r.contratista] = { sum: 0, count: 0, min: Infinity, max: 0 };
-        const t = r.tiempoContratista || 0;
-        grouped[r.contratista].sum += t;
-        grouped[r.contratista].count++;
-        grouped[r.contratista].min = Math.min(grouped[r.contratista].min, t);
-        grouped[r.contratista].max = Math.max(grouped[r.contratista].max, t);
-      });
-      return Object.entries(grouped)
-        .map(([name, data]) => ({ name, promedio: Math.round((data.sum / data.count) * 10) / 10, count: data.count, min: data.min === Infinity ? 0 : data.min, max: data.max }))
-        .sort((a, b) => a.promedio - b.promedio);
-    }
-
-    function renderDashboard() {
-      const promCoord = calcularPromedioCoordinadores();
-      const promCont = calcularPromedioContratistas();
-      const diferencia = Math.round((promCont - promCoord) * 10) / 10;
-      const eficiencia = promCoord > 0 ? Math.round((promCoord / (promCoord + promCont)) * 100) : 0;
-
-      document.getElementById('kpi-total-rem').textContent = DB.remisiones.length;
-      document.getElementById('kpi-prom-coord').textContent = promCoord + 'h';
-      document.getElementById('kpi-prom-cont').textContent = promCont + 'h';
-      document.getElementById('kpi-diferencia').textContent = diferencia + 'h';
-      document.getElementById('kpi-diferencia').style.color = diferencia > 0 ? 'var(--red)' : 'var(--green)';
-
-      document.getElementById('metric-coord').textContent = promCoord + 'h';
-      document.getElementById('metric-coord-sub').textContent = 'Basado en ' + DB.remisiones.length + ' remisiones';
-      document.getElementById('metric-cont').textContent = promCont + 'h';
-      document.getElementById('metric-cont-sub').textContent = 'Basado en ' + DB.remisiones.length + ' remisiones';
-      document.getElementById('metric-eficiencia').textContent = eficiencia + '%';
-      document.getElementById('metric-eficiencia-sub').textContent = promCoord < promCont ? 'Coordinadores mas eficientes' : 'Contratistas mas eficientes';
-
-      const top10 = getTop10ContratistasLentos();
-      const maxVal = top10[0]?.promedio || 1;
-      document.getElementById('top10-chart').innerHTML = top10.map((c, i) => {
-        const pct = (c.promedio / maxVal) * 100;
-        const color = i < 3 ? 'linear-gradient(90deg, #FF1744, #FF6090)' : 'linear-gradient(90deg, #FF6D00, #FFD600)';
-        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + (i + 1) + '. ' + c.name.substring(0, 20) + (c.name.length > 20 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:50px;text-align:right">' + c.count + ' rem.</span></div>';
-      }).join('');
-
-      const coordStats = getCoordinadoresStats();
-      const maxCoord = coordStats[coordStats.length - 1]?.promedio || 1;
-      document.getElementById('coord-chart').innerHTML = coordStats.map(c => {
-        const pct = (c.promedio / maxCoord) * 100;
-        const color = c.promedio <= promCoord ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FFD600, #FF6D00)';
-        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 15) + (c.name.length > 15 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:50px;text-align:right">' + c.count + '</span></div>';
-      }).join('');
-
-      const contStats = getContratistasStats();
-      const maxCont = contStats[contStats.length - 1]?.promedio || 1;
-      document.getElementById('cont-chart').innerHTML = contStats.map(c => {
-        const pct = (c.promedio / maxCont) * 100;
-        const color = c.promedio <= promCont ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FF1744, #FF6090)';
-        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 15) + (c.name.length > 15 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:50px;text-align:right">' + c.count + '</span></div>';
-      }).join('');
-
-      updateSidebarStats();
-    }
-
-    function updateSidebarStats() {
-      document.getElementById('rem-count-badge').textContent = DB.remisiones.length;
-      document.getElementById('total-rem-badge').textContent = DB.remisiones.length;
-      document.getElementById('prom-coord-badge').textContent = calcularPromedioCoordinadores() + 'h';
-      document.getElementById('prom-cont-badge').textContent = calcularPromedioContratistas() + 'h';
-    }
-
-    function populateFilters() {
-      const coords = [...new Set(DB.remisiones.map(r => r.coordinador))].sort();
-      const conts = [...new Set(DB.remisiones.map(r => r.contratista))].sort();
-      const coordSelect = document.getElementById('filter-coord');
-      const contSelect = document.getElementById('filter-cont');
-      coordSelect.innerHTML = '<option value="">Todos</option>' + coords.map(c => '<option value="' + c + '">' + c + '</option>').join('');
-      contSelect.innerHTML = '<option value="">Todos</option>' + conts.map(c => '<option value="' + c + '">' + c + '</option>').join('');
-    }
-
-    function renderControlTiempo() {
-      populateFilters();
-      const filterCoord = document.getElementById('filter-coord').value;
-      const filterCont = document.getElementById('filter-cont').value;
-      const filterEstado = document.getElementById('filter-estado').value;
-      const filterDesde = document.getElementById('filter-desde').value;
-      const filterHasta = document.getElementById('filter-hasta').value;
-      const searchTerm = document.getElementById('search-remisiones').value.toLowerCase();
-
-      let filtered = DB.remisiones.filter(r => {
-        if (filterCoord && r.coordinador !== filterCoord) return false;
-        if (filterCont && r.contratista !== filterCont) return false;
-        if (filterEstado && r.estado !== filterEstado) return false;
-        if (filterDesde && r.fecha < filterDesde) return false;
-        if (filterHasta && r.fecha > filterHasta) return false;
-        if (searchTerm && !r.id.toLowerCase().includes(searchTerm) && !r.coordinador.toLowerCase().includes(searchTerm) && !r.contratista.toLowerCase().includes(searchTerm)) return false;
-        return true;
-      });
-
-      document.getElementById('ctrl-total').textContent = filtered.length;
-      document.getElementById('ctrl-radicadas').textContent = filtered.filter(r => r.estado === 'Radicado' || r.estado === 'Aprobado').length;
-      document.getElementById('ctrl-pendientes').textContent = filtered.filter(r => r.estado === 'Pendiente' || r.estado === 'En Proceso').length;
-      document.getElementById('ctrl-demoradas').textContent = filtered.filter(r => (r.tiempoContratista || 0) > 24).length;
-
-      document.getElementById('control-tbody').innerHTML = filtered.map((r, i) => {
-        const timeClass = (r.tiempoContratista || 0) > 24 ? 'time-slow' : ((r.tiempoContratista || 0) > 12 ? 'time-medium' : 'time-fast');
-        const estadoClass = r.estado === 'Radicado' || r.estado === 'Aprobado' ? 'badge-green' : r.estado === 'Pendiente' ? 'badge-yellow' : r.estado === 'Rechazado' ? 'badge-red' : 'badge-blue';
-        return '<tr><td>' + (i + 1) + '</td><td><strong>' + r.id + '</strong></td><td>' + r.coordinador + '</td><td>' + r.tiempoCoordinador + 'h</td><td>' + r.contratista + '</td><td class="' + timeClass + '">' + r.tiempoContratista + 'h</td><td>' + r.tiempoTotal + 'h</td><td><span class="badge ' + estadoClass + '">' + r.estado + '</span></td><td>' + r.fecha + '</td><td style="color:var(--muted);font-size:11px">' + (r.observaciones || '-') + '</td></tr>';
-      }).join('');
-    }
-
-    function clearFilters() {
-      document.getElementById('filter-coord').value = '';
-      document.getElementById('filter-cont').value = '';
-      document.getElementById('filter-estado').value = '';
-      document.getElementById('filter-desde').value = '';
-      document.getElementById('filter-hasta').value = '';
-      document.getElementById('search-remisiones').value = '';
-      renderControlTiempo();
-    }
-
-    function renderCoordinadores() {
-      const stats = getCoordinadoresStats();
-      const maxVal = stats[stats.length - 1]?.promedio || 1;
-      const promCoord = calcularPromedioCoordinadores();
-
-      document.getElementById('coord-ranking-chart').innerHTML = stats.map(c => {
-        const pct = (c.promedio / maxVal) * 100;
-        const color = c.promedio <= promCoord ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FFD600, #FF6D00)';
-        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 18) + (c.name.length > 18 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:60px;text-align:right">' + c.count + ' rem.</span></div>';
-      }).join('');
-
-      document.getElementById('coord-tbody').innerHTML = stats.map(c => {
-        const eficiencia = c.promedio <= 6 ? 'Alta' : c.promedio <= 10 ? 'Media' : 'Baja';
-        const eficColor = c.promedio <= 6 ? 'var(--green)' : c.promedio <= 10 ? 'var(--yellow)' : 'var(--red)';
-        return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.count + '</td><td>' + c.promedio + 'h</td><td>' + c.min + 'h</td><td>' + c.max + 'h</td><td style="color:' + eficColor + ';font-weight:600">' + eficiencia + '</td></tr>';
-      }).join('');
-    }
-
-    function renderContratistas() {
-      const stats = getContratistasStats();
-      const maxVal = stats[stats.length - 1]?.promedio || 1;
-      const promCont = calcularPromedioContratistas();
-
-      document.getElementById('cont-ranking-chart').innerHTML = stats.map(c => {
-        const pct = (c.promedio / maxVal) * 100;
-        const color = c.promedio <= promCont ? 'linear-gradient(90deg, #00C853, #69F0AE)' : 'linear-gradient(90deg, #FF1744, #FF6090)';
-        return '<div class="bar-row"><span class="bar-label" title="' + c.name + '">' + c.name.substring(0, 18) + (c.name.length > 18 ? '...' : '') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:' + color + '">' + c.promedio + 'h</div></div><span style="font-size:11px;color:var(--muted);min-width:60px;text-align:right">' + c.count + ' rem.</span></div>';
-      }).join('');
-
-      document.getElementById('cont-tbody').innerHTML = stats.map(c => {
-        const estado = c.promedio <= 12 ? 'Excelente' : c.promedio <= 24 ? 'Regular' : 'Critico';
-        const estadoColor = c.promedio <= 12 ? 'var(--green)' : c.promedio <= 24 ? 'var(--yellow)' : 'var(--red)';
-        return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.count + '</td><td>' + c.promedio + 'h</td><td>' + c.min + 'h</td><td>' + c.max + 'h</td><td style="color:' + estadoColor + ';font-weight:600">' + estado + '</td></tr>';
-      }).join('');
-    }
-
-    function renderAnalisis() {
-      const criticas = DB.remisiones.filter(r => (r.tiempoContratista || 0) > 48).length;
-      const medias = DB.remisiones.filter(r => (r.tiempoContratista || 0) > 24 && (r.tiempoContratista || 0) <= 48).length;
-      const meta = DB.remisiones.filter(r => (r.tiempoContratista || 0) < 12 && (r.estado === 'Radicado' || r.estado === 'Aprobado')).length;
-      const hoy = new Date();
-      const semanaAtras = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const remSemana = DB.remisiones.filter(r => new Date(r.fecha) >= semanaAtras);
-      const promSemana = remSemana.length ? Math.round((remSemana.reduce((acc, r) => acc + (r.tiempoContratista || 0), 0) / remSemana.length) * 10) / 10 : 0;
-
-      document.getElementById('alertas-criticas').textContent = criticas;
-      document.getElementById('alertas-media').textContent = medias;
-      document.getElementById('meta-cumplida').textContent = meta;
-      document.getElementById('prom-semana').textContent = promSemana + 'h';
-
-      const rangosCoord = { '0-4h': 0, '4-8h': 0, '8-12h': 0, '12-24h': 0, '>24h': 0 };
-      DB.remisiones.forEach(r => {
-        const t = r.tiempoCoordinador || 0;
-        if (t <= 4) rangosCoord['0-4h']++;
-        else if (t <= 8) rangosCoord['4-8h']++;
-        else if (t <= 12) rangosCoord['8-12h']++;
-        else if (t <= 24) rangosCoord['12-24h']++;
-        else rangosCoord['>24h']++;
-      });
-      const maxCoord = Math.max(...Object.values(rangosCoord)) || 1;
-      document.getElementById('dist-coord').innerHTML = Object.entries(rangosCoord).map(([label, count]) => {
-        const pct = (count / maxCoord) * 100;
-        return '<div class="bar-row"><span class="bar-label">' + label + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:linear-gradient(90deg, var(--cyan), var(--blue))">' + count + '</div></div></div>';
-      }).join('');
-
-      const rangosCont = { '0-8h': 0, '8-16h': 0, '16-24h': 0, '24-48h': 0, '>48h': 0 };
-      DB.remisiones.forEach(r => {
-        const t = r.tiempoContratista || 0;
-        if (t <= 8) rangosCont['0-8h']++;
-        else if (t <= 16) rangosCont['8-16h']++;
-        else if (t <= 24) rangosCont['16-24h']++;
-        else if (t <= 48) rangosCont['24-48h']++;
-        else rangosCont['>48h']++;
-      });
-      const maxCont = Math.max(...Object.values(rangosCont)) || 1;
-      document.getElementById('dist-cont').innerHTML = Object.entries(rangosCont).map(([label, count]) => {
-        const pct = (count / maxCont) * 100;
-        return '<div class="bar-row"><span class="bar-label">' + label + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%; background:linear-gradient(90deg, var(--orange), var(--red))">' + count + '</div></div></div>';
-      }).join('');
-    }
-
-    function renderAll() {
-      renderDashboard();
-      renderControlTiempo();
-      renderCoordinadores();
-      renderContratistas();
-      renderAnalisis();
-    }
-
-    function toast(msg, type) {
-      const el = document.getElementById('toast'), ic = document.getElementById('t-icon'), mc = document.getElementById('t-msg');
-      ic.textContent = type === 'error' ? '✗' : '✓';
-      el.style.borderColor = type === 'error' ? '#FF1744' : '#00C853';
-      mc.textContent = msg;
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 3000);
-    }
-
-    function exportData() {
-      const csv = 'ID,FECHA,COORDINADOR,CONTRATISTA,TIEMPO_COORDINADOR,TIEMPO_CONTRATISTA,TIEMPO_TOTAL,ESTADO,OBSERVACIONES\n' +
-        DB.remisiones.map(r => [r.id, r.fecha, r.coordinador, r.contratista, r.tiempoCoordinador, r.tiempoContratista, r.tiempoTotal, r.estado, r.observaciones].join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'Control_Remisiones_DC1.csv';
-      link.click();
-      toast('Datos exportados ✓');
-    }
-
-    loadTheme();
-    loadDB();
+    processRaw(raw);
+    persistData();
     renderAll();
-  </script>
+
+    dot.className = 'sync-dot live';
+    lbl.textContent = 'Sincronizado · ' + new Date().toLocaleTimeString('es-CO');
+    document.getElementById('dash-last-sync').textContent =
+      'Última sincronización: ' + new Date().toLocaleString('es-CO');
+    toast('Sincronización exitosa ✓');
+
+  } catch(err) {
+    dot.className = 'sync-dot err';
+    lbl.textContent = 'Error de conexión';
+    toast('Error: ' + err.message, 'error');
+  }
+}
+
+/* Mapea cualquier estructura a la normalizada */
+function processRaw(raw) {
+  if (!Array.isArray(raw)) {
+    toast('Formato de datos inesperado', 'error');
+    return;
+  }
+  DATA = raw.map((r, i) => {
+    const g = (keys) => {
+      for (const k of keys) {
+        if (r[k] !== undefined && r[k] !== null && r[k] !== '') return r[k];
+        // case-insensitive
+        const found = Object.keys(r).find(rk => rk.toLowerCase() === k.toLowerCase());
+        if (found && r[found] !== undefined && r[found] !== '') return r[found];
+      }
+      return '';
+    };
+
+    const diasOC  = parseFloat(g(['dias_creacion_oc','DiasCreacionOC','Días Creación OC','col_e','E','dias_coord'])) || 0;
+    const diasRad = parseFloat(g(['dias_radicacion','DiasRadicacion','Días Radicación','col_g','G','dias_cont'])) || 0;
+    const estado  = String(g(['estado','Estado','STATUS','status','col_i','I']) || '').trim();
+    const obs     = String(g(['observaciones','Observaciones','obs','col_j','J']) || '').trim();
+    const num     = String(g(['remision','n_remision','NRemision','Remision','col_a','A','num']) || (i+1)).trim();
+
+    return {
+      id:           i,
+      num,
+      coordinador:  String(g(['coordinador','Coordinador','coord','col_b','B']) || 'Sin asignar').trim(),
+      contratista:  String(g(['contratista','Contratista','cont','col_c','C']) || 'Sin asignar').trim(),
+      tienda:       String(g(['tienda','Tienda','pdv','PDV','col_d','D']) || '').trim(),
+      dias_oc:      diasOC,
+      fecha_oc:     String(g(['fecha_oc','FechaOC','Fecha OC','col_f','F']) || '').trim(),
+      dias_rad:     diasRad,
+      fecha_rad:    String(g(['fecha_rad','FechaRad','Fecha Radicación','col_h','H']) || '').trim(),
+      estado:       estado || 'Pendiente',
+      obs,
+      total_dias:   diasOC + diasRad,
+    };
+  }).filter(r => r.num);
+
+  filtered = [...DATA];
+}
+
+function persistData() {
+  try { localStorage.setItem(STORE, JSON.stringify(DATA)); } catch(e){}
+}
+
+function loadPersisted() {
+  try {
+    const raw = localStorage.getItem(STORE);
+    if (raw) {
+      DATA = JSON.parse(raw);
+      filtered = [...DATA];
+    }
+  } catch(e){}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DEMO DATA
+═══════════════════════════════════════════════════════════════ */
+function loadDemo() {
+  const coordinadores = ['Gustavo Villarreal','Iván Charris','María López','Carlos Rueda','Ana Torres','Jorge Peña'];
+  const contratistas  = ['CLIMATEC S.A.','FRIGOTEC LTDA','INDFRIO S.A.','TECNIFRÍO','COLDCHAIN CO','REFRIGEL','PROAIRES SAS','ANDINA REF','CRIOSERV'];
+  const tiendas       = ['SAO 53 Barranquilla','SAO 93 Bogotá','SDO 528 Medellín','SAO 12 Cali','SAO 67 Cartagena','SAO 44 Bucaramanga','SAO 81 Pereira'];
+  const estados       = ['Radicado','Pendiente','En Revisión','Aprobado','Rechazado'];
+  const rows = [];
+  const base = new Date('2025-09-01');
+
+  for (let i = 0; i < 120; i++) {
+    const coord = coordinadores[Math.floor(Math.random()*coordinadores.length)];
+    const cont  = contratistas[Math.floor(Math.random()*contratistas.length)];
+    const dias_oc  = Math.round(Math.random()*20 + (coord==='Gustavo Villarreal' ? 5 : 1));
+    const dias_rad = Math.round(Math.random()*30 + (cont==='FRIGOTEC LTDA' ? 10 : 2));
+    const d = new Date(base); d.setDate(d.getDate() + Math.floor(Math.random()*240));
+    const estado = estados[Math.floor(Math.random()*estados.length)];
+    rows.push({
+      id: i, num: 'REM-' + String(i+1).padStart(4,'0'),
+      coordinador: coord, contratista: cont,
+      tienda: tiendas[Math.floor(Math.random()*tiendas.length)],
+      dias_oc, fecha_oc: fmtDate(d),
+      dias_rad, fecha_rad: fmtDate(new Date(d.getTime() + dias_rad*86400000)),
+      estado, obs: '',
+      total_dias: dias_oc + dias_rad
+    });
+  }
+  DATA = rows; filtered = [...DATA];
+  persistData();
+  renderAll();
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot live';
+  lbl.textContent = 'Demo · ' + new Date().toLocaleTimeString('es-CO');
+  document.getElementById('dash-last-sync').textContent = 'Datos de demostración cargados';
+  toast('120 registros de demo cargados ✓');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER ALL
+═══════════════════════════════════════════════════════════════ */
+function renderAll() {
+  applyFilters();
+  renderKPIs();
+  renderCharts();
+  renderTopRankings();
+  renderCoordinadores();
+  renderContratistas();
+  renderAlertas();
+  renderSidebarBadges();
+  populateFilters();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   KPIs
+═══════════════════════════════════════════════════════════════ */
+function renderKPIs() {
+  const total     = DATA.length;
+  const avgOC     = avg(DATA.map(r => r.dias_oc));
+  const avgRad    = avg(DATA.map(r => r.dias_rad));
+  const avgTotal  = avg(DATA.map(r => r.total_dias));
+  const crits     = DATA.filter(r => r.dias_rad > 15 || r.dias_oc > 10).length;
+  const aprobados = DATA.filter(r => r.estado.toLowerCase().includes('aprobad')).length;
+
+  const kpis = [
+    { icon:'📄', val:total, unit:'', label:'Total Remisiones', color:'var(--g1)', pct: 100 },
+    { icon:'⏱', val:avgOC.toFixed(1), unit:'d', label:'Prom. Creación OC', color:'var(--info)', pct: Math.min(avgOC/20*100,100) },
+    { icon:'📬', val:avgRad.toFixed(1), unit:'d', label:'Prom. Radicación', color:'var(--cyan)', pct: Math.min(avgRad/30*100,100) },
+    { icon:'🔄', val:avgTotal.toFixed(1), unit:'d', label:'Prom. Ciclo Total', color:'var(--lime)', pct: Math.min(avgTotal/45*100,100) },
+    { icon:'🚨', val:crits, unit:'', label:'Remisiones Críticas', color:'var(--crit)', pct: Math.min(crits/total*100,100) },
+    { icon:'✅', val:aprobados, unit:'', label:'Aprobadas', color:'var(--ok)', pct: total ? Math.round(aprobados/total*100) : 0 },
+  ];
+
+  document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
+    <div class="kpi" style="--kpi-color:${k.color}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-val">${k.val}<span class="unit">${k.unit}</span></div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${k.pct}%"></div></div>
+    </div>`).join('');
+
+  // Time KPIs on tiempos page
+  const coordStats = groupStats(DATA, 'coordinador', 'dias_oc');
+  const contStats  = groupStats(DATA, 'contratista', 'dias_rad');
+  const maxCoord   = coordStats.length ? Math.max(...coordStats.map(x=>x.avg)) : 0;
+  const maxCont    = contStats.length  ? Math.max(...contStats.map(x=>x.avg))  : 0;
+
+  document.getElementById('time-kpis').innerHTML = [
+    { icon:'⏱', val:avgOC.toFixed(1)+'d', label:'Prom. Creación OC', color:'var(--info)' },
+    { icon:'📬', val:avgRad.toFixed(1)+'d', label:'Prom. Radicación', color:'var(--cyan)' },
+    { icon:'👤', val: coordStats.length ? coordStats[0].name.split(' ')[0] : '—', label:'Coord. más lento', color:'var(--warn)' },
+    { icon:'🔧', val: contStats.length ? contStats[0].name.split(' ')[0] : '—', label:'Cont. más demorado', color:'var(--crit)' },
+    { icon:'📊', val:total, label:'Total registros', color:'var(--g1)' },
+  ].map(k => `
+    <div class="kpi" style="--kpi-color:${k.color}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════════════════════ */
+let charts = {};
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderCharts() {
+  const avgOC  = avg(DATA.map(r => r.dias_oc));
+  const avgRad = avg(DATA.map(r => r.dias_rad));
+  const avgTot = avgOC + avgRad;
+
+  // Bar: etapas
+  destroyChart('etapas');
+  charts['etapas'] = new Chart(document.getElementById('chart-etapas').getContext('2d'), {
+    type:'bar',
+    data:{
+      labels:['Creación OC','Radicación','Ciclo Total'],
+      datasets:[{
+        label:'Días promedio',
+        data:[+avgOC.toFixed(1), +avgRad.toFixed(1), +avgTot.toFixed(1)],
+        backgroundColor:['rgba(0,176,255,.6)','rgba(0,229,204,.6)','rgba(185,245,66,.6)'],
+        borderColor:['#00b0ff','#00e5cc','#b9f542'],
+        borderWidth:2, borderRadius:5,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#5a8a72'} },
+        y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#5a8a72'}, beginAtZero:true }
+      }
+    }
+  });
+
+  // Donut: estados
+  const stateMap = {};
+  DATA.forEach(r => { stateMap[r.estado] = (stateMap[r.estado]||0)+1; });
+  const stateKeys = Object.keys(stateMap);
+  const stateCols = ['#00e676','#ffd600','#ff1744','#00b0ff','#b9f542','#00e5cc','#ff6d00'];
+  destroyChart('donut');
+  charts['donut'] = new Chart(document.getElementById('chart-donut').getContext('2d'), {
+    type:'doughnut',
+    data:{
+      labels: stateKeys,
+      datasets:[{
+        data: stateKeys.map(k=>stateMap[k]),
+        backgroundColor: stateKeys.map((_,i)=>stateCols[i%stateCols.length]+'99'),
+        borderColor:     stateKeys.map((_,i)=>stateCols[i%stateCols.length]),
+        borderWidth:2,
+      }]
+    },
+    options:{
+      responsive:false, cutout:'70%',
+      plugins:{ legend:{display:false} }
+    }
+  });
+  document.getElementById('donut-legend').innerHTML = stateKeys.map((k,i) =>
+    `<div class="dl-item"><span class="dl-dot" style="background:${stateCols[i%stateCols.length]}"></span>
+    <span>${k}</span><span class="dl-val">${stateMap[k]}</span></div>`).join('');
+
+  // Trend: últimos 6 meses
+  const months = getLast6Months();
+  const trendOC  = months.map(m => avgMonth(DATA, 'fecha_oc',  'dias_oc',  m));
+  const trendRad = months.map(m => avgMonth(DATA, 'fecha_rad', 'dias_rad', m));
+  destroyChart('trend');
+  charts['trend'] = new Chart(document.getElementById('chart-trend').getContext('2d'), {
+    type:'line',
+    data:{
+      labels: months.map(m => m.label),
+      datasets:[
+        { label:'Creación OC', data:trendOC,  borderColor:'#00b0ff', backgroundColor:'rgba(0,176,255,.1)', tension:.4, fill:true, pointRadius:4 },
+        { label:'Radicación',  data:trendRad, borderColor:'#00e5cc', backgroundColor:'rgba(0,229,204,.08)', tension:.4, fill:true, pointRadius:4 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{color:'#5a8a72', font:{size:11}} } },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#5a8a72'} },
+        y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#5a8a72'}, beginAtZero:true }
+      }
+    }
+  });
+
+  // Rank bar chart
+  const contStats = groupStats(DATA,'contratista','dias_rad').slice(0,10);
+  destroyChart('rank-bar');
+  const rb = document.getElementById('chart-rank-bar');
+  if (rb) {
+    charts['rank-bar'] = new Chart(rb.getContext('2d'), {
+      type:'bar',
+      data:{
+        labels: contStats.map(x => x.name.substring(0,14)),
+        datasets:[{
+          label:'Días prom. radicación',
+          data: contStats.map(x=>+x.avg.toFixed(1)),
+          backgroundColor: contStats.map(x => delayColor(x.avg,0.6)),
+          borderColor:     contStats.map(x => delayColor(x.avg,1.0)),
+          borderWidth:1.5, borderRadius:4,
+        }]
+      },
+      options:{
+        indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{
+          x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#5a8a72'}, beginAtZero:true },
+          y:{ grid:{display:false}, ticks:{color:'#e8f5ee', font:{size:10}} }
+        }
+      }
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOP RANKINGS (Dashboard)
+═══════════════════════════════════════════════════════════════ */
+function renderTopRankings() {
+  const contStats = groupStats(DATA,'contratista','dias_rad');
+  const coordStats= groupStats(DATA,'coordinador','dias_oc');
+  const maxC = contStats.length ? contStats[0].avg : 1;
+  const maxCo= coordStats.length? coordStats[0].avg: 1;
+
+  document.getElementById('top-contratistas').innerHTML = contStats.slice(0,10).map((x,i) =>
+    rankItem(i, x.name, x.avg, maxC, 'days_rad', x.count)).join('');
+
+  document.getElementById('top-coordinadores').innerHTML = coordStats.slice(0,10).map((x,i) =>
+    rankItem(i, x.name, x.avg, maxCo, 'days_oc', x.count)).join('');
+
+  // alert strip
+  const crits = DATA.filter(r => r.dias_rad > 20 || r.dias_oc > 15).length;
+  const warns  = DATA.filter(r => (r.dias_rad > 10 && r.dias_rad <= 20) || (r.dias_oc > 7 && r.dias_oc <= 15)).length;
+  let strips = '';
+  if (crits > 0) strips += `<div class="alert-strip alert-crit">⚠ ${crits} remisiones en estado CRÍTICO (supera umbrales máximos)</div>`;
+  if (warns > 0) strips += `<div class="alert-strip alert-warn">⚡ ${warns} remisiones con demoras elevadas — Requieren atención</div>`;
+  if (!crits && !warns && DATA.length) strips = `<div class="alert-strip alert-ok">✓ Todas las remisiones dentro de parámetros operativos normales</div>`;
+  document.getElementById('alert-strip-zone').innerHTML = strips;
+}
+
+function rankItem(i, name, avgDays, max, type, count) {
+  const col = delayColor(avgDays, 1);
+  const numColors = ['#ffd600','#90a4ae','#ff6d00','#5a8a72','#5a8a72','#5a8a72','#5a8a72','#5a8a72','#5a8a72','#5a8a72'];
+  const pct = Math.round(avgDays/max*100);
+  return `<div class="rank-item">
+    <div class="rank-num" style="background:${numColors[i]}22;color:${numColors[i]};border:1px solid ${numColors[i]}44">${i+1}</div>
+    <div class="rank-info">
+      <div class="rank-name" title="${name}">${name}</div>
+      <div class="rank-sub">${count} registros</div>
+    </div>
+    <div style="flex:1;padding:0 10px;">
+      <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%;background:${col};height:100%;border-radius:3px;"></div></div>
+    </div>
+    <div class="rank-days" style="color:${col}">${avgDays.toFixed(1)}<span style="font-size:11px;font-weight:400;color:var(--muted)">d</span></div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABLA PRINCIPAL
+═══════════════════════════════════════════════════════════════ */
+function applyFilters() {
+  const coord  = document.getElementById('f-coord')?.value  || '';
+  const cont   = document.getElementById('f-cont')?.value   || '';
+  const estado = document.getElementById('f-estado')?.value || '';
+  const search = (document.getElementById('f-search')?.value || '').toLowerCase();
+  const sort   = document.getElementById('f-sort')?.value   || 'fecha_desc';
+
+  filtered = DATA.filter(r => {
+    if (coord  && r.coordinador !== coord)  return false;
+    if (cont   && r.contratista !== cont)   return false;
+    if (estado === 'ok'   && !(r.dias_rad <= 7  && r.dias_oc <= 5))  return false;
+    if (estado === 'warn' && !(r.dias_rad > 7  && r.dias_rad <= 15 || r.dias_oc > 5 && r.dias_oc <= 10)) return false;
+    if (estado === 'crit' && !(r.dias_rad > 15 || r.dias_oc > 10))   return false;
+    if (search && ![r.num, r.coordinador, r.contratista, r.tienda].join(' ').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // sort
+  filtered.sort((a,b) => {
+    if (sort === 'fecha_desc') return (b.fecha_oc||'').localeCompare(a.fecha_oc||'');
+    if (sort === 'fecha_asc')  return (a.fecha_oc||'').localeCompare(b.fecha_oc||'');
+    if (sort === 'demora_desc') return b.dias_rad - a.dias_rad;
+    if (sort === 'demora_asc')  return a.dias_rad - b.dias_rad;
+    return 0;
+  });
+
+  renderTable();
+  renderTimeRankings();
+  renderTrazabilidad();
+  renderHeatmap();
+}
+
+function clearFilters() {
+  document.getElementById('f-coord').value  = '';
+  document.getElementById('f-cont').value   = '';
+  document.getElementById('f-estado').value = '';
+  document.getElementById('f-search').value = '';
+  document.getElementById('f-sort').value   = 'fecha_desc';
+  applyFilters();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('main-tbody');
+  document.getElementById('table-count').textContent = `${filtered.length} registros`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div>No hay datos que coincidan con los filtros</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const sem  = semaforo(r.dias_oc, r.dias_rad);
+    const bOC  = timeBadge(r.dias_oc, 5, 10);
+    const bRad = timeBadge(r.dias_rad, 7, 15);
+    return `<tr>
+      <td><b style="color:var(--g1)">${r.num}</b></td>
+      <td>${r.coordinador}</td>
+      <td>${r.contratista}</td>
+      <td style="font-size:11px;color:var(--muted)">${r.tienda||'—'}</td>
+      <td style="font-size:11px">${r.fecha_oc||'—'}</td>
+      <td>${bOC}</td>
+      <td style="font-size:11px">${r.fecha_rad||'—'}</td>
+      <td>${bRad}</td>
+      <td>${sem}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sortTable(col) {
+  if (sortState.col === col) sortState.dir *= -1;
+  else { sortState.col = col; sortState.dir = 1; }
+  const dir = sortState.dir;
+  const map = {
+    num: r => r.num,
+    coordinador: r => r.coordinador,
+    contratista: r => r.contratista,
+    fecha_oc: r => r.fecha_oc||'',
+    dias_creacion: r => r.dias_oc,
+    fecha_rad: r => r.fecha_rad||'',
+    dias_rad: r => r.dias_rad,
+  };
+  const fn = map[col] || (r => r.id);
+  filtered.sort((a,b) => {
+    const av = fn(a), bv = fn(b);
+    return typeof av === 'number' ? (av-bv)*dir : String(av).localeCompare(String(bv))*dir;
+  });
+  renderTable();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TRAZABILIDAD
+═══════════════════════════════════════════════════════════════ */
+function renderTrazabilidad() {
+  const q = (document.getElementById('traza-search')?.value||'').toLowerCase();
+  const rows = q ? filtered.filter(r => r.num.toLowerCase().includes(q) || r.contratista.toLowerCase().includes(q)) : filtered.slice(0,15);
+  const container = document.getElementById('traza-container');
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div>Sin resultados</div>`; return;
+  }
+  container.innerHTML = rows.map(r => {
+    const s1 = semClass(r.dias_oc, 5, 10);
+    const s2 = semClass(r.dias_rad, 7, 15);
+    return `<div class="tl-item">
+      <div class="tl-dot-wrap">
+        <div class="tl-dot" style="border-color:var(--g1);background:var(--g4)"></div>
+        <div class="tl-line"></div>
+        <div class="tl-dot" style="border-color:var(--cyan);background:rgba(0,229,204,.2)"></div>
+        <div class="tl-line"></div>
+        <div class="tl-dot" style="border-color:${s2==='ok'?'var(--ok)':s2==='warn'?'var(--warn)':'var(--crit)'};background:transparent"></div>
+      </div>
+      <div class="tl-content">
+        <div class="tl-event" style="color:var(--g1)">📄 ${r.num} — ${r.tienda||'Sin tienda'}</div>
+        <div class="tl-time">Coord: <b>${r.coordinador}</b> · OC creada ${r.fecha_oc||'—'} · <span style="color:${s1==='ok'?'var(--ok)':s1==='warn'?'var(--warn)':'var(--crit)'}">${r.dias_oc}d de gestión</span></div>
+        <div class="tl-actor" style="margin-top:5px">Cont: <b>${r.contratista}</b></div>
+        <div class="tl-time">Radicación ${r.fecha_rad||'—'} · <span style="color:${s2==='ok'?'var(--ok)':s2==='warn'?'var(--warn)':'var(--crit)'}">${r.dias_rad}d para radicar</span></div>
+        <div class="tl-time" style="margin-top:4px">${estadoBadgeStr(r.estado)} ${r.obs ? '· '+r.obs : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TIME RANKINGS (tiempos tab)
+═══════════════════════════════════════════════════════════════ */
+function renderTimeRankings() {
+  const coordStats = groupStats(filtered,'coordinador','dias_oc');
+  const contStats  = groupStats(filtered,'contratista','dias_rad');
+  const maxCo = coordStats.length ? coordStats[0].avg : 1;
+  const maxC  = contStats.length  ? contStats[0].avg  : 1;
+
+  const el1 = document.getElementById('rank-coord-detail');
+  const el2 = document.getElementById('rank-cont-detail');
+  if (el1) el1.innerHTML = `<div class="rank-list">${coordStats.slice(0,10).map((x,i) => rankItem(i,x.name,x.avg,maxCo,'oc',x.count)).join('')}</div>`;
+  if (el2) el2.innerHTML = `<div class="rank-list">${contStats.slice(0,10).map((x,i) => rankItem(i,x.name,x.avg,maxC,'rad',x.count)).join('')}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEATMAP / HISTORIAL
+═══════════════════════════════════════════════════════════════ */
+function renderHeatmap() {
+  const zone = document.getElementById('heatmap-zone');
+  if (!zone) return;
+
+  // Count by month
+  const monthMap = {};
+  filtered.forEach(r => {
+    if (!r.fecha_oc) return;
+    const m = r.fecha_oc.substring(0,7);
+    monthMap[m] = (monthMap[m]||0)+1;
+  });
+  const keys = Object.keys(monthMap).sort();
+  const maxV = Math.max(...Object.values(monthMap),1);
+
+  zone.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;">` +
+    keys.map(k => {
+      const v = monthMap[k];
+      const lvl = v/maxV < .25 ? 1 : v/maxV < .5 ? 2 : v/maxV < .75 ? 3 : 4;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div class="hm-cell hm-${lvl}" style="width:40px;height:40px;font-size:9px;border-radius:6px;">${v}</div>
+        <span style="font-size:9px;color:var(--muted)">${k.substring(5)}<br>${k.substring(0,4)}</span>
+      </div>`;
+    }).join('') + `</div>`;
+
+  // Acumulado por etapa
+  const etapas = document.getElementById('acum-etapas');
+  if (!etapas) return;
+  const contStats = groupStats(filtered,'contratista','dias_rad').slice(0,8);
+  const maxV2 = contStats.length ? contStats[0].avg : 1;
+  etapas.innerHTML = contStats.map(x => `
+    <div class="tl-bar-row">
+      <span class="tl-bar-label" title="${x.name}">${x.name.substring(0,18)}${x.name.length>18?'…':''}</span>
+      <div class="tl-bar-track"><div class="tl-bar-fill" style="width:${(x.avg/maxV2*100).toFixed(0)}%;background:${delayColor(x.avg,1)}"></div></div>
+      <span class="tl-bar-val">${x.avg.toFixed(1)}d</span>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COORDINADORES PAGE
+═══════════════════════════════════════════════════════════════ */
+function renderCoordinadores() {
+  const stats = groupStats(DATA,'coordinador','dias_oc');
+  const el = document.getElementById('coord-cards');
+  if (!el) return;
+  el.innerHTML = stats.map(x => {
+    const col = delayColor(x.avg, 1);
+    const s = semClass(x.avg, 5, 10);
+    return `<div class="info-card" style="cursor:default;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="width:44px;height:44px;border-radius:12px;background:${col}22;border:1px solid ${col}44;
+          display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text)">${x.name}</div>
+          <div style="font-size:10px;color:var(--muted)">${x.count} remisiones</div>
+        </div>
+        <div style="margin-left:auto;">${semHtml(s)}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Prom. Creación OC</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:${col}">${x.avg.toFixed(1)}<span style="font-size:12px;color:var(--muted)"> días</span></div>
+        </div>
+        <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Máximo</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text)">${x.max}<span style="font-size:12px;color:var(--muted)"> días</span></div>
+        </div>
+      </div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.min(x.avg/20*100,100).toFixed(0)}%;background:${col}"></div></div>
+    </div>`;
+  }).join('') || `<div class="empty"><div class="empty-icon">👤</div>Sin datos cargados</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTRATISTAS PAGE
+═══════════════════════════════════════════════════════════════ */
+function renderContratistas() {
+  const stats = groupStats(DATA,'contratista','dias_rad');
+  const el = document.getElementById('cont-cards');
+  if (!el) return;
+  el.innerHTML = stats.map(x => {
+    const col = delayColor(x.avg, 1);
+    const s = semClass(x.avg, 7, 15);
+    const aprobados = DATA.filter(r => r.contratista===x.name && r.estado.toLowerCase().includes('aprobad')).length;
+    const pctAprov = x.count ? Math.round(aprobados/x.count*100) : 0;
+    return `<div class="info-card" style="cursor:default;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="width:44px;height:44px;border-radius:12px;background:${col}22;border:1px solid ${col}44;
+          display:flex;align-items:center;justify-content:center;font-size:18px;">🔧</div>
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text)">${x.name}</div>
+          <div style="font-size:10px;color:var(--muted)">${x.count} remisiones · ${pctAprov}% aprobadas</div>
+        </div>
+        <div style="margin-left:auto;">${semHtml(s)}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);">Prom. Radicación</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:${col}">${x.avg.toFixed(1)}d</div>
+        </div>
+        <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);">Máximo</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text)">${x.max}d</div>
+        </div>
+        <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);">Aprobadas</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--ok)">${pctAprov}%</div>
+        </div>
+      </div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.min(x.avg/30*100,100).toFixed(0)}%;background:${col}"></div></div>
+    </div>`;
+  }).join('') || `<div class="empty"><div class="empty-icon">🔧</div>Sin datos cargados</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ALERTAS PAGE
+═══════════════════════════════════════════════════════════════ */
+function renderAlertas() {
+  const crits = DATA.filter(r => r.dias_rad > 20 || r.dias_oc > 15);
+  const warns  = DATA.filter(r => (r.dias_rad > 10 && r.dias_rad <= 20) || (r.dias_oc > 7 && r.dias_oc <= 15));
+  const zone = document.getElementById('alertas-zone');
+  if (!zone) return;
+
+  let html = '';
+  if (!DATA.length) {
+    html = `<div class="empty"><div class="empty-icon">🔎</div>Sin datos. Sincroniza o carga demo.</div>`;
+  } else {
+    if (crits.length) {
+      html += `<div style="margin-bottom:8px;font-family:'Rajdhani',sans-serif;font-size:15px;color:var(--crit);margin-bottom:10px;">🚨 CRÍTICO — ${crits.length} remisiones</div>`;
+      html += crits.map(r => alertCard(r, 'crit')).join('');
+    }
+    if (warns.length) {
+      html += `<div style="margin-bottom:8px;font-family:'Rajdhani',sans-serif;font-size:15px;color:var(--warn);margin-top:18px;margin-bottom:10px;">⚡ ADVERTENCIA — ${warns.length} remisiones</div>`;
+      html += warns.map(r => alertCard(r, 'warn')).join('');
+    }
+    if (!crits.length && !warns.length) {
+      html = `<div class="empty"><div class="empty-icon">✅</div>Sin alertas activas. Todo dentro de parámetros.</div>`;
+    }
+  }
+  zone.innerHTML = html;
+
+  document.getElementById('sb-alerts-count').textContent = crits.length + warns.length;
+}
+
+function alertCard(r, level) {
+  const col = level === 'crit' ? 'var(--crit)' : 'var(--warn)';
+  const bg  = level === 'crit' ? 'rgba(255,23,68,.07)' : 'rgba(255,214,0,.05)';
+  return `<div style="background:${bg};border:1px solid ${col}33;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+    <div style="font-size:22px;">${level==='crit'?'🔴':'🟡'}</div>
+    <div style="flex:1;min-width:180px;">
+      <div style="font-weight:700;color:var(--text);font-size:13px;">${r.num} · ${r.tienda||'—'}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+        Coordinador: <b>${r.coordinador}</b> · OC: <span style="color:${col}"><b>${r.dias_oc}d</b></span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);">
+        Contratista: <b>${r.contratista}</b> · Radicación: <span style="color:${col}"><b>${r.dias_rad}d</b></span>
+      </div>
+    </div>
+    <div>${estadoBadgeStr(r.estado)}</div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   POPULATE FILTERS
+═══════════════════════════════════════════════════════════════ */
+function populateFilters() {
+  const coords = [...new Set(DATA.map(r=>r.coordinador))].sort();
+  const conts  = [...new Set(DATA.map(r=>r.contratista))].sort();
+  const fc = document.getElementById('f-coord');
+  const ft = document.getElementById('f-cont');
+  if (fc) {
+    const v = fc.value;
+    fc.innerHTML = '<option value="">Todos</option>' + coords.map(c=>`<option${c===v?' selected':''}>${c}</option>`).join('');
+  }
+  if (ft) {
+    const v = ft.value;
+    ft.innerHTML = '<option value="">Todos</option>' + conts.map(c=>`<option${c===v?' selected':''}>${c}</option>`).join('');
+  }
+  document.getElementById('sb-coord-count').textContent = coords.length;
+  document.getElementById('sb-cont-count').textContent  = conts.length;
+}
+
+function renderSidebarBadges() {
+  // already done in renderAlertas & populateFilters
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB SWITCHER
+═══════════════════════════════════════════════════════════════ */
+function switchTab(id, page) {
+  const pageEl = document.getElementById('page-'+page);
+  pageEl.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'"+id+"'"));
+  });
+  pageEl.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════════ */
+function nav(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(i => {
+    i.classList.toggle('active', i.dataset.page === pageId);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('dc1_theme', isLight ? 'light' : 'dark');
+}
+
+function loadTheme() {
+  if (localStorage.getItem('dc1_theme') === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('theme-btn').textContent = '☀️';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPORT CSV
+═══════════════════════════════════════════════════════════════ */
+function exportCSV() {
+  if (!filtered.length) { toast('Sin datos para exportar', 'warn'); return; }
+  const headers = ['N_Remision','Coordinador','Contratista','Tienda','Fecha_OC','Dias_OC','Fecha_Rad','Dias_Rad','Estado','Obs'];
+  const rows = filtered.map(r => [r.num,r.coordinador,r.contratista,r.tienda,r.fecha_oc,r.dias_oc,r.fecha_rad,r.dias_rad,r.estado,r.obs]);
+  const csv = [headers,...rows].map(r => r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'DC1_Remisiones_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  toast('CSV exportado ✓');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════════ */
+function avg(arr) {
+  const nums = arr.filter(v => !isNaN(v) && v !== null);
+  return nums.length ? nums.reduce((a,b)=>a+b,0)/nums.length : 0;
+}
+
+function groupStats(data, key, field) {
+  const map = {};
+  data.forEach(r => {
+    const k = r[key] || 'Sin asignar';
+    if (!map[k]) map[k] = { name:k, vals:[], count:0 };
+    map[k].vals.push(+r[field]||0);
+    map[k].count++;
+  });
+  return Object.values(map).map(x => ({
+    name: x.name,
+    avg:  avg(x.vals),
+    max:  Math.max(...x.vals,0),
+    count:x.count,
+  })).sort((a,b) => b.avg - a.avg);
+}
+
+function getLast6Months() {
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({
+      key: d.toISOString().substring(0,7),
+      label: d.toLocaleDateString('es-CO',{month:'short',year:'2-digit'}),
+    });
+  }
+  return months;
+}
+
+function avgMonth(data, dateField, valField, month) {
+  const rows = data.filter(r => (r[dateField]||'').startsWith(month.key));
+  return rows.length ? +avg(rows.map(r=>r[valField])).toFixed(1) : 0;
+}
+
+function delayColor(days, alpha) {
+  if (days <= 7)  return `rgba(0,230,118,${alpha})`;
+  if (days <= 15) return `rgba(255,214,0,${alpha})`;
+  return `rgba(255,23,68,${alpha})`;
+}
+
+function semClass(val, ok, warn) {
+  return val <= ok ? 'ok' : val <= warn ? 'warn' : 'crit';
+}
+
+function semaforo(oc, rad) {
+  const s = (oc > 10 || rad > 15) ? 'crit' : (oc > 5 || rad > 7) ? 'warn' : 'ok';
+  return `<div class="semaforo ${s}"><span class="s-r"></span><span class="s-y"></span><span class="s-g"></span></div>`;
+}
+
+function semHtml(s) {
+  return `<div class="semaforo ${s}"><span class="s-r"></span><span class="s-y"></span><span class="s-g"></span></div>`;
+}
+
+function timeBadge(val, ok, warn) {
+  const days = +val || 0;
+  const cls = days <= ok ? 'badge-ok' : days <= warn ? 'badge-warn' : 'badge-crit';
+  return `<span class="badge ${cls}">${days}d</span>`;
+}
+
+function estadoBadge(estado) {
+  return `<span class="badge ${estadoBadgeClass(estado)}">${estado}</span>`;
+}
+
+function estadoBadgeStr(estado) {
+  return `<span class="badge ${estadoBadgeClass(estado)}">${estado}</span>`;
+}
+
+function estadoBadgeClass(estado) {
+  const e = (estado||'').toLowerCase();
+  if (e.includes('aprobad'))   return 'badge-ok';
+  if (e.includes('rechazad'))  return 'badge-crit';
+  if (e.includes('revisión') || e.includes('revision')) return 'badge-warn';
+  if (e.includes('radicar') || e.includes('radicad'))   return 'badge-neon';
+  if (e.includes('pendiente')) return 'badge-gray';
+  return 'badge-info';
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  return d.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  const ic = document.getElementById('t-icon');
+  const mc = document.getElementById('t-msg');
+  const colors = { success:'#00e676', error:'#ff1744', warn:'#ffd600', info:'#00b0ff' };
+  ic.textContent = type==='success'?'✓' : type==='error'?'✗' : type==='warn'?'⚡' : 'ℹ';
+  el.style.borderColor = colors[type]||colors.success;
+  mc.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+loadTheme();
+loadConfig();
+loadPersisted();
+if (DATA.length) { renderAll(); }
+setupAutoSync();
+if (cfg.url) syncData();
+</script>
 </body>
 </html>

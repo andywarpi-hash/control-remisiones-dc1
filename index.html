@@ -1397,8 +1397,8 @@ function renderTopRankings() {
     rankItem(i, x.name, x.avg, maxCo, 'days_oc', x.count)).join('');
 
   // alert strip
-  const crits = DATA.filter(r => r.dias_rad > 20 || r.dias_oc > 15).length;
-  const warns  = DATA.filter(r => (r.dias_rad > 10 && r.dias_rad <= 20) || (r.dias_oc > 7 && r.dias_oc <= 15)).length;
+  const crits = DATA.filter(r => r.dias_rad > 10 || r.dias_oc > 8).length;
+  const warns  = DATA.filter(r => (r.dias_rad > 5 && r.dias_rad <= 10) || (r.dias_oc > 7 && r.dias_oc <= 8)).length;
   let strips = '';
   if (crits > 0) strips += `<div class="alert-strip alert-crit">⚠ ${crits} remisiones en estado CRÍTICO (supera umbrales máximos)</div>`;
   if (warns > 0) strips += `<div class="alert-strip alert-warn">⚡ ${warns} remisiones con demoras elevadas — Requieren atención</div>`;
@@ -1682,8 +1682,8 @@ function renderContratistas() {
    ALERTAS PAGE
 ═══════════════════════════════════════════════════════════════ */
 function renderAlertas() {
-  const crits = DATA.filter(r => r.dias_rad > 20 || r.dias_oc > 15);
-  const warns  = DATA.filter(r => (r.dias_rad > 10 && r.dias_rad <= 20) || (r.dias_oc > 7 && r.dias_oc <= 15));
+  const crits = DATA.filter(r => r.dias_rad > 10 || r.dias_oc > 5);
+  const warns  = DATA.filter(r => (r.dias_rad > 5 && r.dias_rad <= 10) || (r.dias_oc > 5 && r.dias_oc <= 8));
   const zone = document.getElementById('alertas-zone');
   if (!zone) return;
 

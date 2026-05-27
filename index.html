@@ -1436,8 +1436,8 @@ function applyFilters() {
   filtered = DATA.filter(r => {
     if (coord  && r.coordinador !== coord)  return false;
     if (cont   && r.contratista !== cont)   return false;
-    if (estado === 'ok'   && !(r.dias_rad <= 7  && r.dias_oc <= 5))  return false;
-    if (estado === 'warn' && !(r.dias_rad > 7  && r.dias_rad <= 15 || r.dias_oc > 5 && r.dias_oc <= 10)) return false;
+    if (estado === 'ok'   && !(r.dias_rad <= 5  && r.dias_oc <= 5))  return false;
+    if (estado === 'warn' && !(r.dias_rad > 8  && r.dias_rad <= 15 || r.dias_oc > 5 && r.dias_oc <= 10)) return false;
     if (estado === 'crit' && !(r.dias_rad > 15 || r.dias_oc > 10))   return false;
     if (search && ![r.num, r.coordinador, r.contratista, r.tienda].join(' ').toLowerCase().includes(search)) return false;
     return true;
@@ -1682,8 +1682,49 @@ function renderContratistas() {
    ALERTAS PAGE
 ═══════════════════════════════════════════════════════════════ */
 function renderAlertas() {
-  const crits = DATA.filter(r => r.dias_rad > 10 || r.dias_oc > 5);
-  const warns  = DATA.filter(r => (r.dias_rad > 5 && r.dias_rad <= 10) || (r.dias_oc > 5 && r.dias_oc <= 8));
+  const goods = DATA.filter(r => {
+
+  return (
+    r.dias_rad <= 5
+    &&
+    r.dias_oc <= 5
+  );
+
+});
+
+const warns = DATA.filter(r => {
+
+  const isGood =
+    r.dias_rad <= 5
+    &&
+    r.dias_oc <= 5;
+
+  const isCrit =
+    r.dias_rad > 10
+    ||
+    r.dias_oc > 10;
+
+  if(isGood || isCrit){
+    return false;
+  }
+
+  return (
+    (r.dias_rad > 5 && r.dias_rad <= 10)
+    ||
+    (r.dias_oc > 5 && r.dias_oc <= 10)
+  );
+
+});
+
+const crits = DATA.filter(r => {
+
+  return (
+    r.dias_rad > 10
+    ||
+    r.dias_oc > 10
+  );
+
+});
   const zone = document.getElementById('alertas-zone');
   if (!zone) return;
 

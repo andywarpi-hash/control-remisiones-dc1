@@ -651,7 +651,6 @@
       <span id="sync-label">Sin configurar</span>
     </div>
     <button class="btn btn-outline btn-sm" onclick="syncData()">⟳ Sincronizar</button>
-    <a class="btn btn-ghost btn-sm" href="https://docs.google.com/spreadsheets/d/13nG8bnc67GwnNhcz-Ye5qVf1kyYQkh54KZJWlTrvBS4/edit?gid=473571231#gid=473571231" target="_blank" id="btn-gsheets-topbar" style="text-decoration: none;"><span style="color:#0f9d58; margin-right: 2px;">📊</span> Gsheets</a>
     <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
     <button class="btn btn-icon" onclick="toggleTheme()" id="theme-btn" title="Modo claro/oscuro">🌙</button>
   </div>
@@ -708,7 +707,6 @@
     </div>
     <div class="ph-actions">
       <button class="btn btn-neon btn-sm" onclick="syncData()">⟳ Actualizar</button>
-      <a class="btn btn-outline btn-sm" href="https://docs.google.com/spreadsheets/d/13nG8bnc67GwnNhcz-Ye5qVf1kyYQkh54KZJWlTrvBS4/edit?gid=473571231#gid=473571231" target="_blank" id="btn-gsheets-dash" style="text-decoration: none;"><span style="color:#0f9d58; margin-right: 2px;">📊</span> Gsheets</a>
     </div>
   </div>
 
@@ -940,10 +938,6 @@
       <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/XXXXXX/exec"/>
     </div>
     <div class="config-row" style="margin-bottom:12px;">
-      <label>Google Sheet URL</label>
-      <input type="text" id="cfg-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/XXXXXX/edit"/>
-    </div>
-    <div class="config-row" style="margin-bottom:12px;">
       <label>Rango de Datos</label>
       <input type="text" id="cfg-range" placeholder="Hoja1!A:Z (opcional, si el script lo soporta)"/>
     </div>
@@ -975,7 +969,8 @@
           <span>• <b style="color:var(--text)">Col F</b> — Fecha de creación OC</span>
           <span>• <b style="color:var(--text)">Col G</b> — Días radicación (contratista)</span>
           <span>• <b style="color:var(--text)">Col H</b> — Fecha radicación</span>
-          <span>• <b style="color:var(--text)">Col I</b> — Observaciones</span>
+          <span>• <b style="color:var(--text)">Col I</b> — Estado</span>
+          <span>• <b style="color:var(--text)">Col J</b> — Observaciones</span>
         </div>
       </div>
       <div>
@@ -1027,11 +1022,8 @@ const STORE = 'dc1_v1';
 const CFG   = 'dc1_cfg';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw2ege8GLvLfuLsjq_PepnWIk-eW66KMLlL0DtCG3afz6qKIZBuy7lLP8Vf4NRDT-U6rQ/exec';
 
-const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1f_0OPrnyBcXYjRaAEFI-DM6BUPvzCI20L6mle3YOoZU/edit?gid=0#gid=0';
-
 let cfg = {
   url: DEFAULT_URL,
-  sheetUrl: DEFAULT_SHEET_URL,
   range: '',
   interval: 0
 };
@@ -1041,12 +1033,10 @@ let cfg = {
 ═══════════════════════════════════════════════════════════════ */
 function saveConfig() {
   cfg.url      = document.getElementById('cfg-url').value.trim();
-  cfg.sheetUrl = document.getElementById('cfg-sheet-url').value.trim();
   cfg.range    = document.getElementById('cfg-range').value.trim();
   cfg.interval = parseInt(document.getElementById('cfg-interval').value) || 0;
   localStorage.setItem(CFG, JSON.stringify(cfg));
   setupAutoSync();
-  updateGsheetsLinks();
   toast('Configuración guardada ✓');
   if (cfg.url) syncData();
 }
@@ -1061,26 +1051,12 @@ function loadConfig() {
   if (!cfg.url) {
     cfg.url = DEFAULT_URL;
   }
-  if (!cfg.sheetUrl) {
-    cfg.sheetUrl = DEFAULT_SHEET_URL;
-  }
   const cfgUrl = document.getElementById('cfg-url');
   if (cfgUrl) cfgUrl.value = cfg.url;
-  const cfgSheetUrl = document.getElementById('cfg-sheet-url');
-  if (cfgSheetUrl) cfgSheetUrl.value = cfg.sheetUrl || '';
   const cfgRange = document.getElementById('cfg-range');
   if (cfgRange) cfgRange.value = cfg.range || '';
   const cfgInterval = document.getElementById('cfg-interval');
   if (cfgInterval) cfgInterval.value = cfg.interval || '';
-  updateGsheetsLinks();
-}
-
-function updateGsheetsLinks() {
-  const url = cfg.sheetUrl || DEFAULT_SHEET_URL;
-  const linkTopbar = document.getElementById('btn-gsheets-topbar');
-  if (linkTopbar) linkTopbar.href = url;
-  const linkDash = document.getElementById('btn-gsheets-dash');
-  if (linkDash) linkDash.href = url;
 }
 
 function setupAutoSync() {
@@ -1147,32 +1123,23 @@ function processRaw(raw) {
       return '';
     };
 
-    const num         = String(g(['n° remisión', 'nº remisión', 'n_remision', 'remision', 'nremision', 'num', 'col_a', 'A']) || (i+1)).trim();
-    const coordinador = String(g(['coordinador (quién crea la OC)', 'coordinador (quien crea la OC)', 'coordinador', 'coord', 'col_b', 'B']) || 'Sin asignar').trim();
-    const contratista = String(g(['contratista', 'cont', 'col_c', 'C']) || 'Sin asignar').trim();
-    const tienda      = String(g(['tienda / pdv', 'tienda', 'pdv', 'col_d', 'D']) || '').trim();
-    const diasOC      = parseFloat(g(['días creación oc (coord.)', 'dias creacion oc (coord.)', 'dias_creacion_oc', 'diascreacionoc', 'días creación oc', 'col_e', 'E', 'dias_coord'])) || 0;
-    const fechaOC     = String(g(['fecha de creación oc', 'fecha de creacion oc', 'fecha_oc', 'fechaoc', 'fecha oc', 'col_f', 'F']) || '').trim();
-    const diasRad     = parseFloat(g(['días radicación (contratista)', 'dias radicacion (contratista)', 'dias_radicacion', 'diasradicacion', 'días radicación', 'col_g', 'G', 'dias_cont'])) || 0;
-    const fechaRad    = String(g(['fecha radicación', 'fecha radicacion', 'fecha_rad', 'fecharad', 'fecha radicación', 'col_h', 'H']) || '').trim();
-    
-    let estado        = String(g(['estado', 'status', 'status_label']) || '').trim();
-    if (!estado) {
-      estado = fechaRad ? 'Radicado' : 'Pendiente';
-    }
-    const obs         = String(g(['observaciones', 'obs', 'col_j', 'J', 'col_i', 'I']) || '').trim();
+    const diasOC  = parseFloat(g(['dias_creacion_oc','DiasCreacionOC','Días Creación OC','col_f','F','Dias_OC'])) || 0;
+    const diasRad = parseFloat(g(['dias_radicacion','DiasRadicacion','Días Radicación','col_g','H','Dias_Rad'])) || 0;
+    const estado  = String(g(['estado','Estado','STATUS','status','col_i','I']) || '').trim();
+    const obs     = String(g(['observaciones','Observaciones','obs','col_j','J']) || '').trim();
+    const num     = String(g(['remision','n_remision','NRemision','Remision','col_a','A','num']) || (i+1)).trim();
 
     return {
       id:           i,
       num,
-      coordinador,
-      contratista,
-      tienda,
+      coordinador:  String(g(['coordinador','Coordinador','coord','col_b','B']) || 'Sin asignar').trim(),
+      contratista:  String(g(['contratista','Contratista','cont','col_c','C']) || 'Sin asignar').trim(),
+      tienda:       String(g(['tienda','Tienda','pdv','PDV','col_d','D']) || '').trim(),
       dias_oc:      diasOC,
-      fecha_oc:     fechaOC,
+      fecha_oc:     String(g(['fecha_oc','FechaOC','Fecha OC','col_f','F']) || '').trim(),
       dias_rad:     diasRad,
-      fecha_rad:    fechaRad,
-      estado,
+      fecha_rad:    String(g(['fecha_rad','FechaRad','Fecha Radicación','col_h','H']) || '').trim(),
+      estado:       estado || 'Pendiente',
       obs,
       total_dias:   diasOC + diasRad,
     };
@@ -1257,16 +1224,16 @@ function renderKPIs() {
   const avgOC     = avg(DATA.map(r => r.dias_oc));
   const avgRad    = avg(DATA.map(r => r.dias_rad));
   const avgTotal  = avg(DATA.map(r => r.total_dias));
-  const crits     = DATA.filter(r => r.total_dias > 8).length;
-  const radicados = DATA.filter(r => r.fecha_rad && r.fecha_rad !== '—' && r.fecha_rad !== '').length;
+  const crits     = DATA.filter(r => r.dias_rad > 15 || r.dias_oc > 10).length;
+  const aprobados = DATA.filter(r => r.estado.toLowerCase().includes('aprobad')).length;
 
   const kpis = [
     { icon:'📄', val:total, unit:'', label:'Total Remisiones', color:'var(--g1)', pct: 100 },
-    { icon:'⏱', val:avgOC.toFixed(1), unit:'d', label:'Prom. Creación OC', color:'var(--info)', pct: Math.min(avgOC/10*100,100) },
-    { icon:'📬', val:avgRad.toFixed(1), unit:'d', label:'Prom. Radicación', color:'var(--cyan)', pct: Math.min(avgRad/10*100,100) },
-    { icon:'🔄', val:avgTotal.toFixed(1), unit:'d', label:'Prom. Ciclo Total', color:'var(--lime)', pct: Math.min(avgTotal/20*100,100) },
-    { icon:'🚨', val:crits, unit:'', label:'Remisiones Críticas', color:'var(--crit)', pct: total ? Math.min(crits/total*100,100) : 0 },
-    { icon:'✅', val:radicados, unit:'', label:'Radicadas', color:'var(--ok)', pct: total ? Math.round(radicados/total*100) : 0 },
+    { icon:'⏱', val:avgOC.toFixed(1), unit:'d', label:'Prom. Creación OC', color:'var(--info)', pct: Math.min(avgOC/20*100,100) },
+    { icon:'📬', val:avgRad.toFixed(1), unit:'d', label:'Prom. Radicación', color:'var(--cyan)', pct: Math.min(avgRad/30*100,100) },
+    { icon:'🔄', val:avgTotal.toFixed(1), unit:'d', label:'Prom. Ciclo Total', color:'var(--lime)', pct: Math.min(avgTotal/45*100,100) },
+    { icon:'🚨', val:crits, unit:'', label:'Remisiones Críticas', color:'var(--crit)', pct: Math.min(crits/total*100,100) },
+    { icon:'✅', val:aprobados, unit:'', label:'Aprobadas', color:'var(--ok)', pct: total ? Math.round(aprobados/total*100) : 0 },
   ];
 
   document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
@@ -1510,9 +1477,9 @@ function renderTable() {
   }
 
   tbody.innerHTML = filtered.map(r => {
-    const sem  = semaforo(r.total_dias);
+    const sem  = semaforo(r.dias_oc, r.dias_rad);
     const bOC  = timeBadge(r.dias_oc, 5, 10);
-    const bRad = timeBadge(r.dias_rad, 5, 10);
+    const bRad = timeBadge(r.dias_rad, 7, 15);
     return `<tr>
       <td><b style="color:var(--g1)">${r.num}</b></td>
       <td>${r.coordinador}</td>
@@ -1560,7 +1527,7 @@ function renderTrazabilidad() {
   }
   container.innerHTML = rows.map(r => {
     const s1 = semClass(r.dias_oc, 5, 10);
-    const s2 = semClass(r.dias_rad, 5, 10);
+    const s2 = semClass(r.dias_rad, 7, 15);
     return `<div class="tl-item">
       <div class="tl-dot-wrap">
         <div class="tl-dot" style="border-color:var(--g1);background:var(--g4)"></div>
@@ -1644,7 +1611,7 @@ function renderCoordinadores() {
   if (!el) return;
   el.innerHTML = stats.map(x => {
     const col = delayColor(x.avg, 1);
-    const s = semClass(x.avg, 5, 10);  // coord: 0-5 verde, 5-10 amarillo, 10+ rojo
+    const s = semClass(x.avg, 5, 10);
     return `<div class="info-card" style="cursor:default;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <div style="width:44px;height:44px;border-radius:12px;background:${col}22;border:1px solid ${col}44;
@@ -1679,7 +1646,7 @@ function renderContratistas() {
   if (!el) return;
   el.innerHTML = stats.map(x => {
     const col = delayColor(x.avg, 1);
-    const s = semClass(x.avg, 5, 10);  // contratista: 0-5 verde, 5-10 amarillo, 10+ rojo
+    const s = semClass(x.avg, 7, 15);
     const aprobados = DATA.filter(r => r.contratista===x.name && r.estado.toLowerCase().includes('aprobad')).length;
     const pctAprov = x.count ? Math.round(aprobados/x.count*100) : 0;
     return `<div class="info-card" style="cursor:default;">
@@ -1715,8 +1682,8 @@ function renderContratistas() {
    ALERTAS PAGE
 ═══════════════════════════════════════════════════════════════ */
 function renderAlertas() {
-  const crits = DATA.filter(r => r.total_dias > 10);
-  const warns  = DATA.filter(r => r.total_dias > 5 && r.total_dias <= 10);
+  const crits = DATA.filter(r => r.dias_rad > 20 || r.dias_oc > 15);
+  const warns  = DATA.filter(r => (r.dias_rad > 10 && r.dias_rad <= 20) || (r.dias_oc > 7 && r.dias_oc <= 15));
   const zone = document.getElementById('alertas-zone');
   if (!zone) return;
 
@@ -1879,14 +1846,9 @@ function avgMonth(data, dateField, valField, month) {
   return rows.length ? +avg(rows.map(r=>r[valField])).toFixed(1) : 0;
 }
 
-/* ── Semáforo unificado ──
-   0-5 días  = Verde  (ok)
-   5-10 días = Amarillo (warn)
-   10+ días  = Rojo   (crit)
-   Basado en el tiempo total desde creación OC hasta radicación */
 function delayColor(days, alpha) {
-  if (days <= 5)  return `rgba(0,230,118,${alpha})`;
-  if (days <= 10) return `rgba(255,214,0,${alpha})`;
+  if (days <= 7)  return `rgba(0,230,118,${alpha})`;
+  if (days <= 15) return `rgba(255,214,0,${alpha})`;
   return `rgba(255,23,68,${alpha})`;
 }
 
@@ -1894,8 +1856,8 @@ function semClass(val, ok, warn) {
   return val <= ok ? 'ok' : val <= warn ? 'warn' : 'crit';
 }
 
-function semaforo(totalDias) {
-  const s = totalDias > 10 ? 'crit' : totalDias > 5 ? 'warn' : 'ok';
+function semaforo(oc, rad) {
+  const s = (oc > 10 || rad > 15) ? 'crit' : (oc > 5 || rad > 7) ? 'warn' : 'ok';
   return `<div class="semaforo ${s}"><span class="s-r"></span><span class="s-y"></span><span class="s-g"></span></div>`;
 }
 

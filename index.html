@@ -1339,7 +1339,6 @@ function renderKPIs() {
   document.getElementById('time-kpis').innerHTML = [
     { icon:'⏱', val:avgOC.toFixed(1)+'d', label:'Prom. Creación OC', color:'var(--info)' },
     { icon:'📬', val:avgRad.toFixed(1)+'d', label:'Prom. Radicación', color:'var(--cyan)' },
-    { icon:'👤', val: coordStats.length ? coordStats[0].name.split(' ')[0] : '—', label:'Coord. más lento', color:'var(--warn)' },
     { icon:'🔧', val: contStats.length ? contStats[0].name.split(' ')[0] : '—', label:'Cont. más demorado', color:'var(--crit)' },
     { icon:'📊', val:total, label:'Total registros', color:'var(--g1)' },
   ].map(k => `

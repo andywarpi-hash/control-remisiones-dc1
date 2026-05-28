@@ -796,6 +796,51 @@
           <option value="crit">Crítico</option>
         </select>
       </div>
+<!-- 🔵 NUEVO FILTRO DE PERIODO -->
+
+    <div class="form-group" style="min-width:160px;">
+      <div class="form-label">Periodo</div>
+
+      <select
+        class="filter-select"
+        id="f-period"
+        onchange="applyFilters()"
+        style="width:100%"
+      >
+
+        <option value="">
+          Todo el histórico
+        </option>
+
+        <option value="1">
+          Último mes
+        </option>
+
+        <option value="2">
+          Últimos 2 meses
+        </option>
+
+        <option value="3">
+          Últimos 3 meses
+        </option>
+
+        <option value="4">
+          Últimos 4 meses
+        </option>
+
+        <option value="6">
+          Último semestre
+        </option>
+
+        <option value="12">
+          Último año
+        </option>
+
+      </select>
+
+    </div>
+
+
       <div class="form-group" style="min-width:140px;">
         <div class="form-label">Ordenar por</div>
         <select class="filter-select" id="f-sort" onchange="applyFilters()" style="width:100%">
@@ -1225,7 +1270,7 @@ function renderKPIs() {
   const avgRad    = avg(DATA.map(r => r.dias_rad));
   const avgTotal  = avg(DATA.map(r => r.total_dias));
   const crits     = DATA.filter(r => r.dias_rad > 15 || r.dias_oc > 10).length;
-  const aprobados = DATA.filter(r => r.estado.toLowerCase().includes('aprobad')).length;
+  const radicados = DATA.filter(r => r.estado.toLowerCase().includes('radicad')).length;
 
   const kpis = [
     { icon:'📄', val:total, unit:'', label:'Total Remisiones', color:'var(--g1)', pct: 100 },
@@ -1233,7 +1278,7 @@ function renderKPIs() {
     { icon:'📬', val:avgRad.toFixed(1), unit:'d', label:'Prom. Radicación', color:'var(--cyan)', pct: Math.min(avgRad/30*100,100) },
     { icon:'🔄', val:avgTotal.toFixed(1), unit:'d', label:'Prom. Ciclo Total', color:'var(--lime)', pct: Math.min(avgTotal/45*100,100) },
     { icon:'🚨', val:crits, unit:'', label:'Remisiones Críticas', color:'var(--crit)', pct: Math.min(crits/total*100,100) },
-    { icon:'✅', val:aprobados, unit:'', label:'Aprobadas', color:'var(--ok)', pct: total ? Math.round(aprobados/total*100) : 0 },
+    { icon:'✅', val:radicados, unit:'', label:'Radicadas', color:'var(--ok)', pct: total ? Math.round(radicados/total*100) : 0 },
   ];
 
   document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
@@ -1432,6 +1477,8 @@ function applyFilters() {
   const estado = document.getElementById('f-estado')?.value || '';
   const search = (document.getElementById('f-search')?.value || '').toLowerCase();
   const sort   = document.getElementById('f-sort')?.value   || 'fecha_desc';
+  const period = document.getElementById('f-period')?.value || '';
+    
 
   filtered = DATA.filter(r => {
     if (coord  && r.coordinador !== coord)  return false;
@@ -1655,7 +1702,7 @@ function renderContratistas() {
           display:flex;align-items:center;justify-content:center;font-size:18px;">🔧</div>
         <div>
           <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text)">${x.name}</div>
-          <div style="font-size:10px;color:var(--muted)">${x.count} remisiones · ${pctAprov}% aprobadas</div>
+          <div style="font-size:10px;color:var(--muted)">${x.count} remisiones · ${pctAprov}% radicadas</div>
         </div>
         <div style="margin-left:auto;">${semHtml(s)}</div>
       </div>
@@ -1669,7 +1716,7 @@ function renderContratistas() {
           <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text)">${x.max}d</div>
         </div>
         <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:8px;text-align:center;">
-          <div style="font-size:9px;color:var(--muted);">Aprobadas</div>
+          <div style="font-size:9px;color:var(--muted);">Radicadas</div>
           <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--ok)">${pctAprov}%</div>
         </div>
       </div>
@@ -1922,7 +1969,7 @@ function estadoBadgeStr(estado) {
 
 function estadoBadgeClass(estado) {
   const e = (estado||'').toLowerCase();
-  if (e.includes('aprobad'))   return 'badge-ok';
+  if (e.includes('radicad'))   return 'badge-ok';
   if (e.includes('rechazad'))  return 'badge-crit';
   if (e.includes('revisión') || e.includes('revision')) return 'badge-warn';
   if (e.includes('radicar') || e.includes('radicad'))   return 'badge-neon';

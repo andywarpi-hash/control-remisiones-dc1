@@ -1410,10 +1410,54 @@ function renderCharts() {
       plugins:{ legend:{display:false} }
     }
   });
-  document.getElementById('donut-legend').innerHTML = stateKeys.map((k,i) =>
-    `<div class="dl-item"><span class="dl-dot" style="background:${stateCols[i%stateCols.length]}"></span>
-    <span>${k}</span><span class="dl-val">${stateMap[k]}</span></div>`).join('');
+  document.getElementById('donut-legend').innerHTML =
 
+  stateKeys.map((k,i) => {
+
+    const total =
+      stateKeys.reduce(
+        (a,key)=>a + stateMap[key],
+        0
+      );
+
+    const value =
+      stateMap[k];
+
+    const pct =
+      total
+      ? Math.round((value / total) * 100)
+      : 0;
+
+    return `
+
+      <div class="dl-item">
+
+        <span
+          class="dl-dot"
+          style="
+            background:${stateCols[i%stateCols.length]}
+          "
+        ></span>
+
+        <span>
+          ${k}
+        </span>
+
+        <span style="
+          margin-left:auto;
+          font-weight:700;
+          color:var(--text);
+        ">
+
+          ${value} (${pct}%)
+
+        </span>
+
+      </div>
+
+    `;
+
+}).join('');
   // Trend: últimos 6 meses
   const months = getLast6Months();
   const trendOC  = months.map(m => avgMonth(DATA, 'fecha_oc',  'dias_oc',  m));

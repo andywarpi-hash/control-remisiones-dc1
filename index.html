@@ -796,7 +796,7 @@
           <option value="crit">Crítico</option>
         </select>
       </div>
-<!-- 🔵 NUEVO FILTRO DE PERIODO -->
+<!--  NUEVO FILTRO DE PERIODO -->
 
     <div class="form-group" style="min-width:160px;">
       <div class="form-label">Periodo</div>
@@ -1277,8 +1277,49 @@ function renderKPIs() {
     { icon:'⏱', val:avgOC.toFixed(1), unit:'d', label:'Prom. Creación OC', color:'var(--info)', pct: Math.min(avgOC/20*100,100) },
     { icon:'📬', val:avgRad.toFixed(1), unit:'d', label:'Prom. Radicación', color:'var(--cyan)', pct: Math.min(avgRad/30*100,100) },
     { icon:'🔄', val:avgTotal.toFixed(1), unit:'d', label:'Prom. Ciclo Total', color:'var(--lime)', pct: Math.min(avgTotal/45*100,100) },
-    { icon:'🚨', val:crits, unit:'', label:'Remisiones Críticas', color:'var(--crit)', pct: Math.min(crits/total*100,100) },
-    { icon:'✅', val:radicados, unit:'', label:'Radicadas', color:'var(--ok)', pct: total ? Math.round(radicados/total*100) : 0 },
+    { 
+  icon:'🚨',
+
+  val:`${crits} - ${
+    total
+      ? Math.round((crits / total) * 100)
+      : 0
+  }%`,
+
+  unit:'',
+
+  label:'Remisiones Críticas',
+
+  color:'var(--crit)',
+
+  pct: Math.min(
+    crits / total * 100,
+    100
+  )
+
+},
+   {
+  icon:'✅',
+
+  val:`${radicados} - ${
+    total
+      ? Math.round((radicados / total) * 100)
+      : 0
+  }%`,
+
+  unit:'',
+
+  label:'Radicadas',
+
+  color:'var(--ok)',
+
+  pct: total
+    ? Math.round(
+        radicados / total * 100
+      )
+    : 0
+
+},
   ];
 
   document.getElementById('kpi-grid').innerHTML = kpis.map(k => `

@@ -1269,7 +1269,7 @@ function renderKPIs() {
   const avgOC     = avg(DATA.map(r => r.dias_oc));
   const avgRad    = avg(DATA.map(r => r.dias_rad));
   const avgTotal  = avg(DATA.map(r => r.total_dias));
-  const crits     = DATA.filter(r => r.dias_rad > 15 || r.dias_oc > 10).length;
+  const crits     = DATA.filter(r => r.dias_rad > 10 || r.dias_oc > 10).length;
   const radicados = DATA.filter(r => r.estado.toLowerCase().includes('radicad')).length;
 
   const kpis = [
@@ -1569,8 +1569,8 @@ function applyFilters() {
     if (coord  && r.coordinador !== coord)  return false;
     if (cont   && r.contratista !== cont)   return false;
     if (estado === 'ok'   && !(r.dias_rad <= 5  && r.dias_oc <= 5))  return false;
-    if (estado === 'warn' && !(r.dias_rad > 8  && r.dias_rad <= 15 || r.dias_oc > 5 && r.dias_oc <= 10)) return false;
-    if (estado === 'crit' && !(r.dias_rad > 15 || r.dias_oc > 10))   return false;
+    if (estado === 'warn' && !(r.dias_rad > 5  && r.dias_rad <= 10 || r.dias_oc > 5 && r.dias_oc <= 10)) return false;
+    if (estado === 'crit' && !(r.dias_rad > 10 || r.dias_oc > 10))   return false;
     if (search && ![r.num, r.coordinador, r.contratista, r.tienda].join(' ').toLowerCase().includes(search)) return false;
     return true;
   });
@@ -1611,7 +1611,7 @@ function renderTable() {
   tbody.innerHTML = filtered.map(r => {
     const sem  = semaforo(r.dias_oc, r.dias_rad);
     const bOC  = timeBadge(r.dias_oc, 5, 10);
-    const bRad = timeBadge(r.dias_rad, 7, 15);
+    const bRad = timeBadge(r.dias_rad, 5, 10);
     return `<tr>
       <td><b style="color:var(--g1)">${r.num}</b></td>
       <td>${r.coordinador}</td>
@@ -1659,7 +1659,7 @@ function renderTrazabilidad() {
   }
   container.innerHTML = rows.map(r => {
     const s1 = semClass(r.dias_oc, 5, 10);
-    const s2 = semClass(r.dias_rad, 7, 15);
+    const s2 = semClass(r.dias_rad, 5, 10);
     return `<div class="tl-item">
       <div class="tl-dot-wrap">
         <div class="tl-dot" style="border-color:var(--g1);background:var(--g4)"></div>
@@ -1778,7 +1778,7 @@ function renderContratistas() {
   if (!el) return;
   el.innerHTML = stats.map(x => {
     const col = delayColor(x.avg, 1);
-    const s = semClass(x.avg, 7, 15);
+    const s = semClass(x.avg, 5, 10);
     const aprobados = DATA.filter(r => r.contratista===x.name && r.estado.toLowerCase().includes('aprobad')).length;
     const pctAprov = x.count ? Math.round(aprobados/x.count*100) : 0;
     return `<div class="info-card" style="cursor:default;">
@@ -2020,8 +2020,8 @@ function avgMonth(data, dateField, valField, month) {
 }
 
 function delayColor(days, alpha) {
-  if (days <= 7)  return `rgba(0,230,118,${alpha})`;
-  if (days <= 15) return `rgba(255,214,0,${alpha})`;
+  if (days <= 5)  return `rgba(0,230,118,${alpha})`;
+  if (days <= 10) return `rgba(255,214,0,${alpha})`;
   return `rgba(255,23,68,${alpha})`;
 }
 
@@ -2030,7 +2030,7 @@ function semClass(val, ok, warn) {
 }
 
 function semaforo(oc, rad) {
-  const s = (oc > 10 || rad > 15) ? 'crit' : (oc > 5 || rad > 7) ? 'warn' : 'ok';
+  const s = (oc > 10 || rad > 10) ? 'crit' : (oc > 5 || rad > 5) ? 'warn' : 'ok';
   return `<div class="semaforo ${s}"><span class="s-r"></span><span class="s-y"></span><span class="s-g"></span></div>`;
 }
 
